@@ -17,16 +17,15 @@ spring:
       min-idle: 10
       max-active: 20
       max-wait: 60000
+  jackson:
+    date-format: yyyy-MM-dd HH:mm
+    time-zone: Asia/Shanghai
 
 mybatis:
   mapper-locations: classpath:mapper/*.xml
   type-aliases-package: com.sky.entity
   configuration:
     map-underscore-to-camel-case: true
-
-  jackson:
-    date-format: yyyy-MM-dd HH:mm
-    time-zone: Asia/Shanghai
 
 logging:
   level:

@@ -32,7 +32,7 @@
         <jakarta.xml.bind>4.0.2</jakarta.xml.bind>
         <poi>5.5.1</poi>
         <wechatpay>0.6.0</wechatpay>
-        <jackson3.jsr310>3.0.0-rc2</jackson3.jsr310>
+        <httpclient>4.5.14</httpclient>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -86,12 +86,6 @@
                 <version>${knife4j}</version>
             </dependency>
 
-            <!-- Jackson 3.x JSR310 -->
-            <dependency>
-                <groupId>tools.jackson.datatype</groupId>
-                <artifactId>jackson-datatype-jsr310</artifactId>
-                <version>${jackson3.jsr310}</version>
-            </dependency>
 
             <dependency>
                 <groupId>org.aspectj</groupId>
@@ -152,6 +146,13 @@
                 <groupId>com.github.wechatpay-apiv3</groupId>
                 <artifactId>wechatpay-apache-httpclient</artifactId>
                 <version>${wechatpay}</version>
+            </dependency>
+
+            <!-- Apache HttpClient -->
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${httpclient}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
