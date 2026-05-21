@@ -1,6 +1,7 @@
 package com.sky.config;
 
 import com.sky.interceptor.JwtTokenAdminInterceptor;
+import com.sky.json.JacksonObjectMapper;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
@@ -15,20 +16,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.module.SimpleModule;
-import tools.jackson.databind.ext.javatime.deser.LocalDateDeserializer;
-import tools.jackson.databind.ext.javatime.deser.LocalDateTimeDeserializer;
-import tools.jackson.databind.ext.javatime.deser.LocalTimeDeserializer;
-import tools.jackson.databind.ext.javatime.ser.LocalDateSerializer;
-import tools.jackson.databind.ext.javatime.ser.LocalDateTimeSerializer;
-import tools.jackson.databind.ext.javatime.ser.LocalTimeSerializer;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 
 @Configuration
 @Slf4j
