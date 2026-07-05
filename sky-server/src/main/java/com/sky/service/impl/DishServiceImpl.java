@@ -146,4 +146,18 @@ public class DishServiceImpl implements DishService {
 
     }
 
+    /**
+     * 根据分类id查询菜品
+     * @param categoryId 分类ID，用于指定要查询的菜品分类
+     * @return 返回指定分类下的菜品列表
+     */
+    @Override  // 标记该方法覆盖了父类或接口中的同名方法
+    public List<Dish> list(Long categoryId) {  // 方法声明，返回菜品列表，接受一个分类ID参数
+        log.info("根据分类id查询菜品:{}",categoryId);  // 记录日志，输出查询的分类ID
+    // 创建Dish对象，设置分类ID和状态为启用
+         Dish dish =Dish.builder().categoryId(categoryId).status(StatusConstant.ENABLE).build();
+    // 调用dishMapper的list方法，查询符合条件的菜品列表
+        return dishMapper.list(dish);
+    }
+
 }
