@@ -11,3 +11,8 @@ sky:
     access-key-id: LTAI5t7Adi1i73B9wqt4JVpa
     access-key-secret: 8XasTojFDgABvTscZDhShBrslv1Cbw
     bucket-name: mehado-java
+  redis:
+      host: localhost
+      database: 0
+      port: 6379
+      password: mehado

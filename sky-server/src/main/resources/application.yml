@@ -17,9 +17,17 @@ spring:
       min-idle: 10
       max-active: 20
       max-wait: 60000
+
+
   jackson:
     date-format: yyyy-MM-dd HH:mm
     time-zone: Asia/Shanghai
+  data:
+    redis:
+      host: ${sky.redis.host}
+      database: ${sky.redis.database}
+      port: ${sky.redis.port}
+      password: ${sky.redis.password}
 
 mybatis:
   mapper-locations: classpath:mapper/*.xml
