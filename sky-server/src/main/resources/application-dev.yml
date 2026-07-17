@@ -16,3 +16,7 @@ sky:
       database: 0
       port: 6379
       password: mehado
+
+  wechat:
+    appid: wx0c9d3e46195ee4d8
+    secret: 1356e8366234269dc83e1e679f02afd3
