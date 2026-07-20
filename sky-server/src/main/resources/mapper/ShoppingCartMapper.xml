@@ -16,7 +16,7 @@
                 <if test="setmealId != null">
                     and setmeal_id = #{setmealId}
                 </if>
-                <if test="dishFlavor != null">
+                <if test="dishFlavor != null and dishFlavor != ''">
                     and dish_flavor = #{dishFlavor}
                 </if>
             </where>

@@ -58,12 +58,13 @@ public class SetmealServiceImpl implements SetmealService {
         //获取生成的套餐Id
         Long setmealId = setmeal.getId();
         List<SetmealDish> setmealDishes = setmealDTO.getSetmealDishes();
-        setmealDishes.forEach(setmealDish -> {
-            setmealDish.setSetmealId(setmealId);
-        });
-
-        //保存套餐和菜品的关联关系
-        setmealDishMapper.insertBatch(setmealDishes);
+        if (setmealDishes != null && !setmealDishes.isEmpty()) {
+            setmealDishes.forEach(setmealDish -> {
+                setmealDish.setSetmealId(setmealId);
+            });
+            //保存套餐和菜品的关联关系
+            setmealDishMapper.insertBatch(setmealDishes);
+        }
     }
 
     @Override
@@ -135,12 +136,14 @@ public class SetmealServiceImpl implements SetmealService {
         //2、删除套餐和菜品的关联关系，操作setmeal_dish表，执行delete
         setmealDishMapper.deleteBySetmealId(setmealId);
 
+        //3、重新插入套餐和菜品的关联关系
         List<SetmealDish> setmealDishes = setmealDTO.getSetmealDishes();
-        setmealDishes.forEach(setmealDish -> {
-            setmealDish.setSetmealId(setmealId);
-        });
-        //3、重新插入套餐和菜品的关联关系，操作setmeal_dish表，执行insert
-        setmealDishMapper.insertBatch(setmealDishes);
+        if (setmealDishes != null && !setmealDishes.isEmpty()) {
+            setmealDishes.forEach(setmealDish -> {
+                setmealDish.setSetmealId(setmealId);
+            });
+            setmealDishMapper.insertBatch(setmealDishes);
+        }
     }
 
     /**

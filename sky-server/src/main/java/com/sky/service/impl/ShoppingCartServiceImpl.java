@@ -41,14 +41,14 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         Long userId = BaseContext.getCurrentId();
         shoppingCart.setUserId(userId);
 
-        List<ShoppingCart> list =shoppingCartMapper.list(shoppingCart);
+        List<ShoppingCart> list = shoppingCartMapper.list(shoppingCart);
 
         //判断是否是第一次添加该商品，如果是，则直接添加，如果不是，则更新数量
-        if(list!=null&&list.size()>0){
-            ShoppingCart cart= list.get(0);
-            cart.setNumber(shoppingCart.getNumber()+1);
+        if(list != null && !list.isEmpty()){
+            ShoppingCart cart = list.get(0);
+            cart.setNumber(cart.getNumber() + 1);
             shoppingCartMapper.updateNumberById(cart);
-            }else{
+        }else{
             //不存在数据需要插入
             Long dishId = shoppingCartDTO.getDishId();
             if(dishId!=null){
@@ -93,5 +93,28 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     public void cleanShoppingCart() {
         Long userId = BaseContext.getCurrentId();
         shoppingCartMapper.deleteByUserId(userId);
+    }
+
+    /**
+     * 删除购物车中一个商品
+     * @param shoppingCartDTO
+     * @return
+     */
+    public void subShoppingCart(ShoppingCartDTO shoppingCartDTO) {
+        ShoppingCart shoppingCart = new ShoppingCart();
+        BeanUtils.copyProperties(shoppingCartDTO, shoppingCart);
+        //设置查询条件，查询当前登录用户购物车信息
+        shoppingCart.setUserId(BaseContext.getCurrentId());
+        List<ShoppingCart> list = shoppingCartMapper.list(shoppingCart);
+        if (list != null && !list.isEmpty()) {
+            ShoppingCart cart = list.get(0);
+            // 如果当前商品数量 > 1，减1；否则直接删除
+            if (cart.getNumber() > 1) {
+                cart.setNumber(cart.getNumber() - 1);
+                shoppingCartMapper.updateNumberById(cart);
+            } else {
+                shoppingCartMapper.deleteById(cart.getId());
+            }
+        }
     }
 }

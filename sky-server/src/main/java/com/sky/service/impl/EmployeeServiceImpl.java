@@ -15,14 +15,12 @@ import com.sky.exception.AccountNotFoundException;
 import com.sky.exception.PasswordErrorException;
 import com.sky.mapper.EmployeeMapper;
 import com.sky.result.PageResult;
-import com.sky.result.Result;
 import com.sky.service.EmployeeService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -100,15 +98,13 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     //启用禁用员工账号
     @Override
-    public Result startOrStop(Integer status, Long id) {
+    public void startOrStop(Integer status, Long id) {
         //update employee set status = ? where id = ?
-        Employee employee = Employee.builder().status( status)
+        Employee employee = Employee.builder()
+                .status(status)
                 .id(id)
-                .updateTime(LocalDateTime.now())
-                .updateUser(BaseContext.getCurrentId())
                 .build();
-                employeeMapper.update(employee);
-        return null;
+        employeeMapper.update(employee);
     }
 
     //根据id查询员工：

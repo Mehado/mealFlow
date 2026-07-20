@@ -78,7 +78,7 @@ public class DishController {
 //            String key ="dish_" +id;
 //            redisTemplate.delete(key);
 //        }
-        clearCache("id_*");
+        clearCache("dish_*");
         return Result.success("删除菜品成功");
     }
 
@@ -102,7 +102,7 @@ public class DishController {
         log.info("修改菜品:{}", dishDTO);
         dishService.updateWithFlavor(dishDTO);
         //清理缓存数据
-        clearCache("id_*");
+        clearCache("dish_*");
         return Result.success("修改菜品成功");
     }
 
@@ -117,7 +117,7 @@ public class DishController {
     public Result<String> startOrStop(@PathVariable Integer status,Long id){
         dishService.startOrStop(status,id);
         //清理缓存数据
-        clearCache("id_*");
+        clearCache("dish_*");
         return Result.success("修改菜品状态成功");
     }
 

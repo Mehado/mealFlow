@@ -30,7 +30,7 @@ public interface EmployeeService {
     PageResult pageQuery(EmployeePageQueryDTO employeePageQueryDTO);
 
     //启用禁用员工账号
-    Result startOrStop(Integer status, Long id);
+    void startOrStop(Integer status, Long id);
 
     /**
      * 根据id查询员工信息

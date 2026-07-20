@@ -28,7 +28,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler
     public Result exceptionHandler(SQLIntegrityConstraintViolationException ex){
-        return Result.error("用户名重复！！！");
+        // 处理唯一键约束冲突
+        String message = ex.getMessage();
+        if (message != null && message.contains("Duplicate entry")) {
+            String[] parts = message.split(" ");
+            String key = parts.length > 2 ? parts[2] : "";
+            return Result.error(key + "已存在");
+        }
+        return Result.error("数据约束异常，请检查输入");
     }
 
 }
