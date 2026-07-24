@@ -45,7 +45,7 @@ public class OrderController {
      */
     @PutMapping("/payment")
     @Operation(summary = "订单支付")
-    public Result<OrderPaymentVO> payment(@RequestBody OrdersPaymentDTO ordersPaymentDTO) throws Exception {
+    public Result<OrderPaymentVO> payment(@RequestBody OrdersPaymentDTO ordersPaymentDTO) {
         log.info("订单支付：{}", ordersPaymentDTO);
         OrderPaymentVO orderPaymentVO = orderService.payment(ordersPaymentDTO);
         log.info("生成预支付交易单：{}", orderPaymentVO);
@@ -84,7 +84,7 @@ public class OrderController {
      */
     @PutMapping("/cancel/{id}")
     @Operation(summary = "取消订单")
-    public Result cancel(@PathVariable("id") Long id) throws Exception {
+    public Result cancel(@PathVariable("id") Long id) {
         orderService.userCancelById(id);
         return Result.success();
     }
@@ -98,6 +98,13 @@ public class OrderController {
     @Operation(summary = "再来一单")
     public Result repetition(@PathVariable Long id) {
         orderService.repetition(id);
+        return Result.success();
+    }
+
+    @GetMapping("/reminder/{id}")
+    @Operation(summary = "用户催单")
+    public Result reminder(@PathVariable("id") Long id) {
+        orderService.reminder(id);
         return Result.success();
     }
 }

@@ -79,4 +79,12 @@ public class OrderController {
         orderService.complete(id);
         return Result.success();
     }
+
+    @PutMapping("/simulatePayNotify/{orderNumber}")
+    @Operation(summary = "模拟支付成功回调")
+    public Result simulatePayNotify(@PathVariable String orderNumber) {
+        log.info("模拟支付成功回调，订单号：{}", orderNumber);
+        orderService.paySuccess(orderNumber);
+        return Result.success();
+    }
 }
