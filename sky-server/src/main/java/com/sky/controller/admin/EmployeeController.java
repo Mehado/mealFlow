@@ -1,9 +1,11 @@
 package com.sky.controller.admin;
 
+import com.sky.annotations.SelfPermission;
 import com.sky.constant.JwtClaimsConstant;
 import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
 import com.sky.dto.EmployeePageQueryDTO;
+import com.sky.dto.PasswordEditDTO;
 import com.sky.entity.Employee;
 import com.sky.properties.JwtProperties;
 import com.sky.result.PageResult;
@@ -83,6 +85,7 @@ public class EmployeeController {
     // 员工状态禁用/启用
     @PostMapping("/status/{status}")
     @Operation(summary = "员工状态禁用/启用")
+    @SelfPermission(targetId = "#id", type = SelfPermission.CheckType.NOT_SELF)
     public Result startOrStop(@PathVariable Integer status, Long id){
         log.info("禁用/启用员工账号：{},{}", status, id);
         employeeService.startOrStop(status, id);
@@ -102,6 +105,8 @@ public class EmployeeController {
         return Result.success(employee);
     }
 
+
+    @SelfPermission(targetId = "#employeeDTO.id", type = SelfPermission.CheckType.SELF)
     @PutMapping
     @Operation(summary = "员工信息修改")
     public Result update(@RequestBody EmployeeDTO employeeDTO){
@@ -110,5 +115,12 @@ public class EmployeeController {
         return Result.success();
     }
 
-
+    @SelfPermission(targetId = "#passwordEditDTO.empId", type = SelfPermission.CheckType.SELF)
+    @PutMapping("/editPassword")
+    @Operation(summary = "修改密码")
+    public Result<Void> updatePassword(@RequestBody PasswordEditDTO passwordEditDTO) {
+        log.info("修改密码：{}", passwordEditDTO);
+        employeeService.updatePassword(passwordEditDTO);
+        return Result.success();
+    }
 }

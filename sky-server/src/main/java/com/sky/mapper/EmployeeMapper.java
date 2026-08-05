@@ -8,6 +8,7 @@ import com.sky.enumeration.OperationType;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 @Mapper
 public interface EmployeeMapper {
@@ -52,4 +53,12 @@ public interface EmployeeMapper {
      */
     @Select("select * from employee where id = #{id}")
     Employee getById(Long id);
+
+    /**
+     * 修改密码
+     * @param id
+     * @param encodedPassword
+     */
+    @Update("update employee set password = #{encodedPassword} where id = #{id}")
+    void updatePassword(Long id, String encodedPassword);
 }

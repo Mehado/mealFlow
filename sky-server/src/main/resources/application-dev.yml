@@ -5,21 +5,21 @@ sky:
     port: 3306
     database: sky_take_out
     username: root
-    password: 1234
+    password: ENC(jwAZvWvXyCP5PZIZWsHM0zlJp3T/xP5qWlTkP2Ns+X/UrVefPa2R+VrWzrxWqLN1)
   alioss:
     endpoint: oss-cn-beijing.aliyuncs.com
-    access-key-id: LTAI5t7Adi1i73B9wqt4JVpa
-    access-key-secret: 8XasTojFDgABvTscZDhShBrslv1Cbw
+    access-key-id: ENC(mdid8CUy3FXzT1dV2H93h5avWMus/81CUJ1MxFDB7Q0AYbyltyRCjOG55WbTNmqErdtCWzfycMVRoVSZ1ycGbw==)
+    access-key-secret: ENC(Ha4qa2yA8FxjDj9a2vK7Uzh8o0yH79x22WPHHMEIYngNRR2OThXStV9L/VyMQ44BjVsCfpSL6u984r1VuUwqdA==)
     bucket-name: mehado-java
   redis:
       host: localhost
       database: 0
       port: 6379
-      password: mehado
+      password: ENC(wLMQPivDv4CWM6dbf9sAi+PMB/ujGSk390K9ZGv6GSwfhTwpOVLWoEC4P4CLE96c)
 
   wechat:
     appid: wx0c9d3e46195ee4d8
-    secret: 1356e8366234269dc83e1e679f02afd3
+    secret: ENC(0t1Tbv8VVsvoISIEFcuUbJHgA5oUMH5wnR+3jwcem3ggy//v7HForWzpxi3w/UKv3vBI9AyETA2CBrhPoMluzTRve55gzUrSvlOzf9cXLR8=)
 
   shop:
     address: 北京市海淀区上地信息路

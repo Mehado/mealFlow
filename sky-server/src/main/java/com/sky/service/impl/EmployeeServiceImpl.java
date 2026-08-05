@@ -1,11 +1,19 @@
 package com.sky.service.impl;
 
+import java.util.List;
+
+import com.sky.context.BaseContext;
+import com.sky.dto.PasswordEditDTO;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.constant.PasswordConstant;
 import com.sky.constant.StatusConstant;
-import com.sky.context.BaseContext;
 import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
 import com.sky.dto.EmployeePageQueryDTO;
@@ -16,18 +24,14 @@ import com.sky.exception.PasswordErrorException;
 import com.sky.mapper.EmployeeMapper;
 import com.sky.result.PageResult;
 import com.sky.service.EmployeeService;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.util.DigestUtils;
-
-import java.util.List;
 
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
 
     @Autowired
     private EmployeeMapper employeeMapper;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     /**
      * 员工登录
@@ -49,9 +53,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
 
         //密码比对
-        // 对前端传过来的密码进行md5加密之后再进行比对
-        password = DigestUtils.md5DigestAsHex(password.getBytes());
-        if (!password.equals(employee.getPassword())) {
+        // 对前端传过来的密码进行BCrypt加密之后再进行比对(自动提取数据库中密文的盐值进行加密)
+        //password = DigestUtils.md5DigestAsHex(password.getBytes());
+        if (!passwordEncoder.matches(password,employee.getPassword())) {
             //密码错误
             throw new PasswordErrorException(MessageConstant.PASSWORD_ERROR);
         }
@@ -72,7 +76,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         BeanUtils.copyProperties(employeeDTO, employee);
         employee.setStatus(StatusConstant.ENABLE);
 
-        employee.setPassword(DigestUtils.md5DigestAsHex(PasswordConstant.DEFAULT_PASSWORD.getBytes()));
+        employee.setPassword(passwordEncoder.encode(PasswordConstant.DEFAULT_PASSWORD));  // 使用BCrypt加密默认密码
 
 //        employee.setCreateTime(LocalDateTime.now());
 //
@@ -123,6 +127,26 @@ public class EmployeeServiceImpl implements EmployeeService {
 //        employee.setUpdateTime(LocalDateTime.now());
 //        employee.setUpdateUser(BaseContext.getCurrentId());
         employeeMapper.update(employee);
+    }
+
+    /**
+     * 修改密码
+     * @param passwordEditDTO
+     */
+    public void updatePassword(PasswordEditDTO passwordEditDTO) {
+        Long id= BaseContext.getCurrentId();
+
+        String  oldPassword = passwordEditDTO.getOldPassword();
+        String  newPassword = passwordEditDTO.getNewPassword();
+
+        Employee employee = employeeMapper.getById(id);
+        String originPassword = employee.getPassword();
+        if (!passwordEncoder.matches(oldPassword,originPassword)) { // 密码比对失败
+            throw new PasswordErrorException(MessageConstant.PASSWORD_ERROR);
+            }
+        //employee.setPassword(passwordEncoder.encode(newPassword));
+        String encodedPassword = passwordEncoder.encode(newPassword);
+        employeeMapper.updatePassword(id, encodedPassword);
     }
 
 }
