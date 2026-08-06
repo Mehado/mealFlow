@@ -11,9 +11,11 @@
             <if test="sex != null">sex = #{sex},</if>
             <if test="idNumber != null">id_number = #{idNumber},</if>
             <if test="status != null">status = #{status},</if>
+            <if test="role != null">role = #{role},</if>
             <if test="password != null">password = #{password},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
             <if test="updateUser != null">update_user = #{updateUser},</if>
+
         </set>
         <where>
             id = #{id}

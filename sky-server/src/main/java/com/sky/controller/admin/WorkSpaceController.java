@@ -1,5 +1,7 @@
 package com.sky.controller.admin;
 
+import com.sky.annotations.RequireRole;
+import com.sky.constant.RoleConstant;
 import com.sky.result.Result;
 import com.sky.service.WorkspaceService;
 import com.sky.vo.BusinessDataVO;
@@ -32,6 +34,7 @@ public class WorkSpaceController {
      * 工作台今日数据查询
      * @return
      */
+    @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER})
     @GetMapping("/businessData")
     @Operation(summary = "工作台今日数据查询")
     public Result<BusinessDataVO> businessData(){
@@ -48,6 +51,7 @@ public class WorkSpaceController {
      * 查询订单管理数据
      * @return
      */
+    @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER})
     @GetMapping("/overviewOrders")
     @Operation(summary = "查询订单管理数据")
     public Result<OrderOverViewVO> orderOverView(){
@@ -58,6 +62,7 @@ public class WorkSpaceController {
      * 查询菜品总览
      * @return
      */
+    @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER})
     @GetMapping("/overviewDishes")
     @Operation(summary = "查询菜品总览")
     public Result<DishOverViewVO> dishOverView(){
@@ -68,6 +73,7 @@ public class WorkSpaceController {
      * 查询套餐总览
      * @return
      */
+    @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER})
     @GetMapping("/overviewSetmeals")
     @Operation(summary = "查询套餐总览")
     public Result<SetmealOverViewVO> setmealOverView(){

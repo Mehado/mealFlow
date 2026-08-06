@@ -1,5 +1,7 @@
 package com.sky.controller.admin;
 
+import com.sky.annotations.RequireRole;
+import com.sky.constant.RoleConstant;
 import com.sky.dto.CategoryDTO;
 import com.sky.dto.CategoryPageQueryDTO;
 import com.sky.entity.Category;
@@ -30,6 +32,7 @@ public class CategoryController {
      * @param categoryDTO
      * @return
      */
+    @RequireRole
     @PostMapping
     @Operation(summary = "新增分类")
     public Result<String> save(@RequestBody CategoryDTO categoryDTO){
@@ -43,9 +46,9 @@ public class CategoryController {
      * @param categoryPageQueryDTO
      * @return
      */
+    @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER,RoleConstant.CHEF})
     @GetMapping("/page")
     @Operation(summary = "分类分页查询")
-
     public Result<PageResult> page(CategoryPageQueryDTO categoryPageQueryDTO){
         log.info("分页查询：{}", categoryPageQueryDTO);
         PageResult pageResult = categoryService.pageQuery(categoryPageQueryDTO);
@@ -57,8 +60,9 @@ public class CategoryController {
      * @param id
      * @return
      */
+    @RequireRole
     @DeleteMapping
-    @Operation(summary = "分类分页查询")
+    @Operation(summary = "删除分类")
     public Result<String> deleteById(Long id){
         log.info("删除分类：{}", id);
         categoryService.deleteById(id);
@@ -70,6 +74,7 @@ public class CategoryController {
      * @param categoryDTO
      * @return
      */
+    @RequireRole
     @PutMapping
     @Operation(summary = "修改分类")
     public Result<String> update(@RequestBody CategoryDTO categoryDTO){
@@ -83,6 +88,7 @@ public class CategoryController {
      * @param id
      * @return
      */
+    @RequireRole
     @PostMapping("/status/{status}")
     @Operation(summary = "启用禁用分类")
     public Result<String> startOrStop(@PathVariable("status") Integer status, Long id){
@@ -95,6 +101,7 @@ public class CategoryController {
      * @param type
      * @return
      */
+    @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER,RoleConstant.CHEF})
     @GetMapping("/list")
     @Operation(summary = "根据类型查询分类")
     public Result<List<Category>> list(Integer type){

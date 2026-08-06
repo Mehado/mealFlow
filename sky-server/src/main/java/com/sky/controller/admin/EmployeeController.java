@@ -1,5 +1,6 @@
 package com.sky.controller.admin;
 
+import com.sky.annotations.RequireRole;
 import com.sky.annotations.SelfPermission;
 import com.sky.constant.JwtClaimsConstant;
 import com.sky.dto.EmployeeDTO;
@@ -43,7 +44,10 @@ public class EmployeeController {
 
         //登录成功后，生成jwt令牌
         Map<String, Object> claims = new HashMap<>();
+
         claims.put(JwtClaimsConstant.EMP_ID, employee.getId());
+        claims.put(JwtClaimsConstant.ROLE, employee.getRole());
+
         String token = JwtUtil.createJWT(
                 jwtProperties.getAdminSecretKey(),
                 jwtProperties.getAdminTtl(),
@@ -66,6 +70,7 @@ public class EmployeeController {
     }
 
 //新增员工
+    @RequireRole
     @PostMapping
     @Operation(summary = "新增员工")
     public Result save(@RequestBody EmployeeDTO employeeDTO){
@@ -73,6 +78,7 @@ public class EmployeeController {
          employeeService.save(employeeDTO);
          return Result.success();
     }
+    @RequireRole
     @GetMapping("/page")
     @Operation(summary = "员工分页查询")
     // 员工分页查询
@@ -83,6 +89,7 @@ public class EmployeeController {
     }
 
     // 员工状态禁用/启用
+    @RequireRole
     @PostMapping("/status/{status}")
     @Operation(summary = "员工状态禁用/启用")
     @SelfPermission(targetId = "#id", type = SelfPermission.CheckType.NOT_SELF)
@@ -97,6 +104,7 @@ public class EmployeeController {
      * @param id
      * @return
      */
+    @RequireRole
     @GetMapping("/{id}")
     @Operation(summary = "员工查询")
     public Result<Employee> getById(@PathVariable Long id){
@@ -106,7 +114,7 @@ public class EmployeeController {
     }
 
 
-    @SelfPermission(targetId = "#employeeDTO.id", type = SelfPermission.CheckType.SELF)
+    @RequireRole
     @PutMapping
     @Operation(summary = "员工信息修改")
     public Result update(@RequestBody EmployeeDTO employeeDTO){

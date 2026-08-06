@@ -1,6 +1,8 @@
 package com.sky.controller.admin;
 
 
+import com.sky.annotations.RequireRole;
+import com.sky.constant.RoleConstant;
 import com.sky.result.Result;
 import com.sky.service.ReportService;
 import com.sky.vo.OrderReportVO;
@@ -28,6 +30,7 @@ public class ReportController {
     @Autowired
     private ReportService reportService;
 
+    @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER})
     @GetMapping("/turnoverStatistics")
     @Operation(summary = "营业额统计")
     public Result<TurnoverReportVO> turnoverStatistics(
@@ -36,7 +39,7 @@ public class ReportController {
             ){
         return Result.success(reportService.getTurnoverStatistics(begin,end));
     }
-
+    @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER})
     @GetMapping("/userStatistics")
     @Operation(summary = "用户数据统计")
     public Result<UserReportVO> userStatistics(
@@ -53,6 +56,7 @@ public class ReportController {
      * @param end
      * @return
      */
+    @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER})
     @GetMapping("/ordersStatistics")
     @Operation(summary = "订单数据统计")
     public Result<OrderReportVO> ordersStatistics(
@@ -69,6 +73,7 @@ public class ReportController {
      * @param end
      * @return
      */
+    @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER})
     @GetMapping("/top10")
     @Operation(summary = "订单数据统计")
     public Result<SalesTop10ReportVO> top10(

@@ -1,6 +1,8 @@
 package com.sky.controller.admin;
 
 
+import com.sky.annotations.RequireRole;
+import com.sky.constant.RoleConstant;
 import com.sky.result.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,6 +24,7 @@ public class ShopController {
      * @param status
      * @return
      */
+    @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER})
     @PutMapping("/{status}")
     public Result setStatus(@PathVariable Integer status){
         log.info("设置店铺状态：{}",status==1?"":"关闭");
@@ -33,6 +36,7 @@ public class ShopController {
      * 获取店铺状态
      * @return
      */
+    @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER})
     @GetMapping("/status")
     @Operation(summary = "获取店铺状态")
     public Result<Integer> getStatus(){

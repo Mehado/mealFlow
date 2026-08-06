@@ -2,6 +2,7 @@ package com.sky.service.impl;
 
 import java.util.List;
 
+import com.sky.constant.RoleConstant;
 import com.sky.context.BaseContext;
 import com.sky.dto.PasswordEditDTO;
 import org.springframework.beans.BeanUtils;
@@ -76,15 +77,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         BeanUtils.copyProperties(employeeDTO, employee);
         employee.setStatus(StatusConstant.ENABLE);
 
+        //新增员工没指定职业就给STAFF，即最小权限
+        if(employee.getRole() == null||employee.getRole().trim().isEmpty()) {
+            employee.setRole(RoleConstant.STAFF);
+        }
+
         employee.setPassword(passwordEncoder.encode(PasswordConstant.DEFAULT_PASSWORD));  // 使用BCrypt加密默认密码
-
-//        employee.setCreateTime(LocalDateTime.now());
-//
-//        employee.setUpdateTime(LocalDateTime.now());
-
-
-//        employee.setCreateUser(BaseContext.getCurrentId());
-//        employee.setUpdateUser(BaseContext.getCurrentId());
 
         employeeMapper.insert(employee);
     }

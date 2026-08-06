@@ -1,5 +1,7 @@
 package com.sky.controller.admin;
 
+import com.sky.annotations.RequireRole;
+import com.sky.constant.RoleConstant;
 import com.sky.dto.SetmealDTO;
 import com.sky.dto.SetmealPageQueryDTO;
 import com.sky.result.PageResult;
@@ -32,6 +34,7 @@ public class SetmealController {
      * @param setmealDTO 套餐信息
      * @return
      */
+    @RequireRole
     @PostMapping
     @Operation(summary = "新增套餐")
     @CacheEvict(cacheNames="setmealCache",key="#setmealDTO.categoryId")
@@ -45,6 +48,7 @@ public class SetmealController {
      * @param setmealPageQueryDTO
      * @return
      */
+    @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER,RoleConstant.CHEF})
     @GetMapping("/page")
     @Operation(summary = "分页查询")
     public Result<PageResult> page(SetmealPageQueryDTO setmealPageQueryDTO){
@@ -56,6 +60,7 @@ public class SetmealController {
      * @param ids
      * @return
      */
+    @RequireRole
     @DeleteMapping
     @Operation(summary = "根据id批量删除套餐")
     @CacheEvict(cacheNames="setmealCache",allEntries = true)
@@ -70,6 +75,7 @@ public class SetmealController {
      * @param id
      * @return
      */
+    @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER,RoleConstant.CHEF})
     @GetMapping("/{id}")
     @Operation(summary = "根据id查询套餐")
     public Result<SetmealVO> getById(@PathVariable Long id){
@@ -81,6 +87,7 @@ public class SetmealController {
      * @param setmealDTO
      * @return
      */
+    @RequireRole
     @PutMapping
     @Operation(summary = "修改套餐")
     @CacheEvict(cacheNames="setmealCache",allEntries = true)
@@ -95,6 +102,7 @@ public class SetmealController {
      * @param id
      * @return
      */
+    @RequireRole
     @PostMapping("/status/{status}")
     @Operation(summary = "套餐起售停售")
     @CacheEvict(cacheNames="setmealCache",allEntries = true)

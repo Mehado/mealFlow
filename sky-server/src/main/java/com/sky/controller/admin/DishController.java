@@ -1,5 +1,7 @@
 package com.sky.controller.admin;
 
+import com.sky.annotations.RequireRole;
+import com.sky.constant.RoleConstant;
 import com.sky.dto.DishDTO;
 import com.sky.dto.DishPageQueryDTO;
 import com.sky.entity.Dish;
@@ -35,6 +37,7 @@ public class DishController {
      * @param dishDTO
      * @return
      */
+    @RequireRole
     @PostMapping
     @Operation(summary = "新增菜品")
     public Result save(@RequestBody DishDTO dishDTO) {
@@ -54,6 +57,7 @@ public class DishController {
      * @param dishPageQueryDTO
      * @return
      */
+    @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER,RoleConstant.CHEF})
     @GetMapping("/page")
     @Operation(summary = "分页查询菜品")
     public Result<PageResult> page(DishPageQueryDTO dishPageQueryDTO) {
@@ -68,6 +72,7 @@ public class DishController {
      * @return
      * @RequestBody List<Long> ids
      */
+    @RequireRole
     @DeleteMapping
     @Operation(summary = "根据id批量删除菜品")
     public Result delete(@RequestParam List<Long> ids) {
@@ -81,7 +86,7 @@ public class DishController {
         clearCache("dish_*");
         return Result.success("删除菜品成功");
     }
-
+    @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER,RoleConstant.CHEF})
     @GetMapping("/{id}")
     @Operation(summary = "根据id查询菜品")
     public Result<DishVO> getById(@PathVariable Long id) {
@@ -96,6 +101,7 @@ public class DishController {
      * @return
      * @RequestBody DishDTO dishDTO
      */
+    @RequireRole
     @PutMapping
     @Operation(summary = "修改菜品")
     public Result update(@RequestBody DishDTO dishDTO) {
@@ -112,6 +118,7 @@ public class DishController {
      * @param id
      * @return
      */
+    @RequireRole
     @PostMapping("/status/{status}")
     @Operation(summary = "菜品起售停售")
     public Result<String> startOrStop(@PathVariable Integer status,Long id){
@@ -126,6 +133,7 @@ public class DishController {
      * @param categoryId
      * @return
      */
+    @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER,RoleConstant.CHEF})
     @GetMapping("/list")
     @Operation(summary = "根据分类id查询菜品")
     public Result<List<Dish>> list(Long categoryId) {

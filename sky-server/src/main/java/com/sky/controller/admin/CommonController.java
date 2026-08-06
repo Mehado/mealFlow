@@ -1,7 +1,9 @@
 package com.sky.controller.admin;
 
 
+import com.sky.annotations.RequireRole;
 import com.sky.constant.MessageConstant;
+import com.sky.constant.RoleConstant;
 import com.sky.result.Result;
 import com.sky.utils.AliOssUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,7 +35,7 @@ public class CommonController {
      * @param file
      * @return
      */
-
+    @RequireRole
     @PostMapping("/upload")
     @Operation(summary = "文件上传")
     public Result<String> uploadFile(MultipartFile file){
