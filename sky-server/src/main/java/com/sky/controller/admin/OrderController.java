@@ -13,6 +13,7 @@ import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -29,7 +30,7 @@ public class OrderController {
     @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER,RoleConstant.CHEF,RoleConstant.RIDER})
     @GetMapping("/conditionSearch")
     @Operation(summary = "订单搜索")
-    public Result<PageResult> conditionSearch(OrdersPageQueryDTO ordersPageQueryDTO) {
+    public Result<PageResult> conditionSearch(@Valid OrdersPageQueryDTO ordersPageQueryDTO) {
         PageResult pageResult = orderService.conditionSearch(ordersPageQueryDTO);
         return Result.success(pageResult);
     }
@@ -50,21 +51,21 @@ public class OrderController {
     @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER})
     @PutMapping("/confirm")
     @Operation(summary = "接单")
-    public Result confirm(@RequestBody OrdersConfirmDTO ordersConfirmDTO) {
+    public Result confirm(@Valid @RequestBody OrdersConfirmDTO ordersConfirmDTO) {
         orderService.confirm(ordersConfirmDTO);
         return Result.success();
     }
     @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER})
     @PutMapping("/rejection")
     @Operation(summary = "拒单")
-    public Result rejection(@RequestBody OrdersRejectionDTO ordersRejectionDTO) throws Exception {
+    public Result rejection(@Valid @RequestBody OrdersRejectionDTO ordersRejectionDTO) throws Exception {
         orderService.rejection(ordersRejectionDTO);
         return Result.success();
     }
     @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER})
     @PutMapping("/cancel")
     @Operation(summary = "取消订单")
-    public Result cancel(@RequestBody OrdersCancelDTO ordersCancelDTO) throws Exception {
+    public Result cancel(@Valid @RequestBody OrdersCancelDTO ordersCancelDTO) throws Exception {
         orderService.cancel(ordersCancelDTO);
         return Result.success();
     }

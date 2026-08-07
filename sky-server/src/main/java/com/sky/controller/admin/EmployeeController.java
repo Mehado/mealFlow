@@ -16,6 +16,7 @@ import com.sky.utils.JwtUtil;
 import com.sky.vo.EmployeeLoginVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +38,7 @@ public class EmployeeController {
 
     @Operation(summary = "员工登录")
     @PostMapping("/login")
-    public Result<EmployeeLoginVO> login(@RequestBody EmployeeLoginDTO employeeLoginDTO) {
+    public Result<EmployeeLoginVO> login(@Valid @RequestBody EmployeeLoginDTO employeeLoginDTO) {
         log.info("员工登录：{}", employeeLoginDTO);
 
         Employee employee = employeeService.login(employeeLoginDTO);
@@ -73,7 +74,7 @@ public class EmployeeController {
     @RequireRole
     @PostMapping
     @Operation(summary = "新增员工")
-    public Result save(@RequestBody EmployeeDTO employeeDTO){
+    public Result save(@Valid @RequestBody EmployeeDTO employeeDTO){
         log.info("新增员工：{}",employeeDTO);
          employeeService.save(employeeDTO);
          return Result.success();
@@ -82,7 +83,7 @@ public class EmployeeController {
     @GetMapping("/page")
     @Operation(summary = "员工分页查询")
     // 员工分页查询
-    public Result<PageResult> page(@ParameterObject EmployeePageQueryDTO employeePageQueryDTO){
+    public Result<PageResult> page(@Valid @ParameterObject EmployeePageQueryDTO employeePageQueryDTO){
         log.info("员工分页查询：{}",employeePageQueryDTO);
        PageResult pageResult = employeeService.pageQuery(employeePageQueryDTO);
        return Result.success(pageResult);
@@ -117,7 +118,7 @@ public class EmployeeController {
     @RequireRole
     @PutMapping
     @Operation(summary = "员工信息修改")
-    public Result update(@RequestBody EmployeeDTO employeeDTO){
+    public Result update(@Valid @RequestBody EmployeeDTO employeeDTO){
         log.info("员工信息修改：{}",employeeDTO);
         employeeService.update(employeeDTO);
         return Result.success();
@@ -126,7 +127,7 @@ public class EmployeeController {
     @SelfPermission(targetId = "#passwordEditDTO.empId", type = SelfPermission.CheckType.SELF)
     @PutMapping("/editPassword")
     @Operation(summary = "修改密码")
-    public Result<Void> updatePassword(@RequestBody PasswordEditDTO passwordEditDTO) {
+    public Result<Void> updatePassword(@Valid @RequestBody PasswordEditDTO passwordEditDTO) {
         log.info("修改密码：{}", passwordEditDTO);
         employeeService.updatePassword(passwordEditDTO);
         return Result.success();

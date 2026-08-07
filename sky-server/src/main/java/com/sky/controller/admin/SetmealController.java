@@ -10,6 +10,7 @@ import com.sky.service.SetmealService;
 import com.sky.vo.SetmealVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -38,7 +39,7 @@ public class SetmealController {
     @PostMapping
     @Operation(summary = "新增套餐")
     @CacheEvict(cacheNames="setmealCache",key="#setmealDTO.categoryId")
-    public Result save(@RequestBody SetmealDTO setmealDTO){
+    public Result save(@Valid @RequestBody SetmealDTO setmealDTO){
         log.info("新增套餐:{}",setmealDTO);
         setmealService.saveWithDish(setmealDTO);
         return Result.success();
@@ -51,7 +52,7 @@ public class SetmealController {
     @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER,RoleConstant.CHEF})
     @GetMapping("/page")
     @Operation(summary = "分页查询")
-    public Result<PageResult> page(SetmealPageQueryDTO setmealPageQueryDTO){
+    public Result<PageResult> page(@Valid SetmealPageQueryDTO setmealPageQueryDTO){
         PageResult pageResult= setmealService.pageQuery(setmealPageQueryDTO);
         return Result.success(pageResult);
     }
@@ -91,7 +92,7 @@ public class SetmealController {
     @PutMapping
     @Operation(summary = "修改套餐")
     @CacheEvict(cacheNames="setmealCache",allEntries = true)
-    public Result update(@RequestBody SetmealDTO setmealDTO) {
+    public Result update(@Valid @RequestBody SetmealDTO setmealDTO) {
         log.info("修改套餐:{}", setmealDTO);
         setmealService.update(setmealDTO);
         return Result.success();

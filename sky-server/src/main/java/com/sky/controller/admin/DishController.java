@@ -11,6 +11,7 @@ import com.sky.service.DishService;
 import com.sky.vo.DishVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -40,7 +41,7 @@ public class DishController {
     @RequireRole
     @PostMapping
     @Operation(summary = "新增菜品")
-    public Result save(@RequestBody DishDTO dishDTO) {
+    public Result save(@Valid @RequestBody DishDTO dishDTO) {
         log.info("新增菜品:{}", dishDTO);
         dishService.saveWithFlavor(dishDTO);
         //清理缓存数据
@@ -60,7 +61,7 @@ public class DishController {
     @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER,RoleConstant.CHEF})
     @GetMapping("/page")
     @Operation(summary = "分页查询菜品")
-    public Result<PageResult> page(DishPageQueryDTO dishPageQueryDTO) {
+    public Result<PageResult> page(@Valid DishPageQueryDTO dishPageQueryDTO) {
         log.info("分页查询菜品:{}", dishPageQueryDTO);
         PageResult pageResult = dishService.pageQuery(dishPageQueryDTO);
         return Result.success(pageResult);
@@ -104,7 +105,7 @@ public class DishController {
     @RequireRole
     @PutMapping
     @Operation(summary = "修改菜品")
-    public Result update(@RequestBody DishDTO dishDTO) {
+    public Result update(@Valid @RequestBody DishDTO dishDTO) {
         log.info("修改菜品:{}", dishDTO);
         dishService.updateWithFlavor(dishDTO);
         //清理缓存数据

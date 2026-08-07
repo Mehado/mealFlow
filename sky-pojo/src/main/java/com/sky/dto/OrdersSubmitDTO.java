@@ -1,6 +1,8 @@
 package com.sky.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -10,6 +12,7 @@ import java.time.LocalDateTime;
 @Data
 public class OrdersSubmitDTO implements Serializable {
     //地址簿id
+    @NotNull(message = "地址簿id不能为空")
     private Long addressBookId;
     //付款方式
     private int payMethod;
@@ -27,5 +30,7 @@ public class OrdersSubmitDTO implements Serializable {
     //打包费
     private Integer packAmount;
     //总金额
+    @NotNull(message = "总金额不能为空")
+    @Positive(message = "总金额不能为负数")
     private BigDecimal amount;
 }

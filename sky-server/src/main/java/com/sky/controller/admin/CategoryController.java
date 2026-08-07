@@ -10,6 +10,7 @@ import com.sky.result.Result;
 import com.sky.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -35,7 +36,7 @@ public class CategoryController {
     @RequireRole
     @PostMapping
     @Operation(summary = "新增分类")
-    public Result<String> save(@RequestBody CategoryDTO categoryDTO){
+    public Result<String> save(@Valid @RequestBody CategoryDTO categoryDTO){
         log.info("新增分类：{}", categoryDTO);
         categoryService.save(categoryDTO);
         return Result.success();
@@ -49,7 +50,7 @@ public class CategoryController {
     @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER,RoleConstant.CHEF})
     @GetMapping("/page")
     @Operation(summary = "分类分页查询")
-    public Result<PageResult> page(CategoryPageQueryDTO categoryPageQueryDTO){
+    public Result<PageResult> page(@Valid CategoryPageQueryDTO categoryPageQueryDTO){
         log.info("分页查询：{}", categoryPageQueryDTO);
         PageResult pageResult = categoryService.pageQuery(categoryPageQueryDTO);
         return Result.success(pageResult);
@@ -77,7 +78,7 @@ public class CategoryController {
     @RequireRole
     @PutMapping
     @Operation(summary = "修改分类")
-    public Result<String> update(@RequestBody CategoryDTO categoryDTO){
+    public Result<String> update(@Valid @RequestBody CategoryDTO categoryDTO){
         categoryService.update(categoryDTO);
         return Result.success();
     }

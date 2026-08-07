@@ -1,5 +1,6 @@
 package com.sky.dto;
 
+import jakarta.validation.constraints.Min;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -7,8 +8,10 @@ import java.io.Serializable;
 @Data
 public class SetmealPageQueryDTO implements Serializable {
 
+    @Min(value = 1, message = "页码不能小于1")
     private int page;
 
+    @Min(value = 1, message = "每页条数不能小于1")
     private int pageSize;
 
     private String name;
