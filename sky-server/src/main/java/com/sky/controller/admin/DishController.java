@@ -12,19 +12,21 @@ import com.sky.vo.DishVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/admin/dish")
 @Slf4j
 @Tag(name="菜品管理",description = "提供菜品相关的API接口")
 public class DishController {
 
-    @Autowired
-    private DishService dishService;
+
+    private final DishService dishService;
 
     /**
      * 新增菜品

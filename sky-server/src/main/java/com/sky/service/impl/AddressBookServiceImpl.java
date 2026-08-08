@@ -4,6 +4,7 @@ import com.sky.context.BaseContext;
 import com.sky.entity.AddressBook;
 import com.sky.mapper.AddressBookMapper;
 import com.sky.service.AddressBookService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,9 +13,10 @@ import java.util.List;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class AddressBookServiceImpl implements AddressBookService {
-    @Autowired
-    private AddressBookMapper addressBookMapper;
+
+    private final AddressBookMapper addressBookMapper;
 
     /**
      * 条件查询

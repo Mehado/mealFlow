@@ -1,5 +1,6 @@
 package com.sky.handler;
 
+import com.sky.constant.MessageConstant;
 import com.sky.exception.BaseException;
 import com.sky.result.Result;
 import jakarta.validation.ConstraintViolation;
@@ -112,5 +113,11 @@ public class GlobalExceptionHandler {
         log.error("文件上传失败：{}", ex.getMessage());
         return Result.error("文件大小超过限制,最大5MB");
     }
+    @ExceptionHandler(Exception.class)
+    public Result exceptionHandler(Exception ex) {
+        log.error("未知错误:", ex);
+        return Result.error("系统异常，请稍后再试");
+    }
+
 
 }

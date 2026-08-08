@@ -11,6 +11,7 @@ import com.sky.vo.UserLoginVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,16 +22,17 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.Map;
 
+@RequiredArgsConstructor
 @RestController
 @Slf4j
 @RequestMapping("/user/user")
 @Tag(name = "用户管理", description = "用户管理相关接口")
 public class UserController {
 
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private JwtProperties jwtProperties;
+
+    private final UserService userService;
+
+    private final JwtProperties jwtProperties;
 
     /**
      * 微信登录

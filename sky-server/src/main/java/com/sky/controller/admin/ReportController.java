@@ -11,6 +11,7 @@ import com.sky.vo.TurnoverReportVO;
 import com.sky.vo.UserReportVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cglib.core.Local;
@@ -24,11 +25,12 @@ import java.time.LocalDate;
 @RestController
 @RequestMapping("/admin/report")
 @Slf4j
+@RequiredArgsConstructor
 @Tag(name = "报表管理",description = "报表管理")
 public class ReportController {
 
-    @Autowired
-    private ReportService reportService;
+
+    private final ReportService reportService;
 
     @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER})
     @GetMapping("/turnoverStatistics")

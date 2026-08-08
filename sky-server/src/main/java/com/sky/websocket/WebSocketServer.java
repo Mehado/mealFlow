@@ -37,7 +37,6 @@ public class WebSocketServer {
     public void setJwtProperties(JwtProperties jwtProperties) {
         WebSocketServer.jwtProperties = jwtProperties;
     }
-
     /**
      * 连接建立成功调用的方法
      */

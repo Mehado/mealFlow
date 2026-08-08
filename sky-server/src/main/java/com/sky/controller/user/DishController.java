@@ -8,6 +8,7 @@ import com.sky.service.DishService;
 import com.sky.vo.DishVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,10 +19,11 @@ import java.util.List;
 @RestController("userDishController")
 @RequestMapping("/user/dish")
 @Slf4j
+@RequiredArgsConstructor
 @Tag(name = "C端-菜品浏览接口")
 public class DishController {
-    @Autowired
-    private DishService dishService;
+
+    private final DishService dishService;
 
     /**
      * 根据分类id查询菜品

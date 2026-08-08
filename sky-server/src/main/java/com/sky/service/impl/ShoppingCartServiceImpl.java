@@ -9,6 +9,7 @@ import com.sky.mapper.DishMapper;
 import com.sky.mapper.SetmealMapper;
 import com.sky.mapper.ShoppingCartMapper;
 import com.sky.service.ShoppingCartService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,15 +21,10 @@ import java.util.List;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class ShoppingCartServiceImpl implements ShoppingCartService {
-
-    @Autowired
     private ShoppingCartMapper shoppingCartMapper;
-
-    @Autowired
     private DishMapper dishMapper;
-
-    @Autowired
     private SetmealMapper setmealMapper;
 /**
  * 添加购物车的方法

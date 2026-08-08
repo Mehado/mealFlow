@@ -10,6 +10,7 @@ import com.sky.vo.OrderReportVO;
 import com.sky.vo.SalesTop10ReportVO;
 import com.sky.vo.TurnoverReportVO;
 import com.sky.vo.UserReportVO;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,13 +27,12 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class ReportServiceImpl implements ReportService {
 
-    @Autowired
-    private OrderMapper orderMapper;
+    private final OrderMapper orderMapper;
 
-    @Autowired
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
 
     /**
      * 营业额统计
@@ -142,10 +142,10 @@ public class ReportServiceImpl implements ReportService {
             LocalDateTime beginTime = LocalDateTime.of(date, LocalTime.MIN);
             LocalDateTime endTime = LocalDateTime.of(date, LocalTime.MAX);
             Integer orderCount = getOrderCount(beginTime, endTime, null);
-            Integer validorderCoun = getOrderCount(beginTime, endTime, Orders.COMPLETED);
+            Integer validOrderCount = getOrderCount(beginTime, endTime, Orders.COMPLETED);
 
             orderCountList.add(orderCount);
-            validOrderCountList.add(validorderCoun);
+            validOrderCountList.add(validOrderCount);
 
         }
         //时间内订单总数

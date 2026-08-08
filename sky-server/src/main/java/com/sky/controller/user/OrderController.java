@@ -14,6 +14,7 @@ import com.sky.vo.OrderVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -22,11 +23,11 @@ import org.springframework.web.bind.annotation.*;
 @RestController("userOrderController")
 @RequestMapping("/user/order")
 @Tag(name = "用户订单接口")
+@RequiredArgsConstructor
 public class OrderController {
 
 
-    @Autowired
-    private OrderService orderService;
+    private final OrderService orderService;
 
     /**
      * 获取下单幂令牌

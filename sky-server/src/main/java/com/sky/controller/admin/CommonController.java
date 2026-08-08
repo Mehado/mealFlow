@@ -8,6 +8,7 @@ import com.sky.result.Result;
 import com.sky.utils.AliOssUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,12 +28,13 @@ import java.util.UUID;
 @RequestMapping("admin/common")
 @Tag(name="通用接口",description = "通用接口")
 @Slf4j
+@RequiredArgsConstructor
 public class CommonController {
     //允许上传的图片扩展名白名单
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("png", "jpg", "jpeg", "gif","bmp","webp");
 
-    @Autowired
-    private AliOssUtil aliOssUtil;
+
+    private final AliOssUtil aliOssUtil;
 
     /**
      * 文件上传接口

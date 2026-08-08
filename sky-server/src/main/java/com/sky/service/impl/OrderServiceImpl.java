@@ -1,8 +1,6 @@
 package com.sky.service.impl;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
@@ -14,15 +12,14 @@ import com.sky.exception.OrderBusinessException;
 import com.sky.mapper.*;
 import com.sky.result.PageResult;
 import com.sky.service.OrderService;
-import com.sky.utils.HttpClientUtil;
 import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
 import com.sky.websocket.WebSocketServer;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -30,50 +27,47 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
-import java.net.http.WebSocket;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static com.sky.constant.MessageConstant.ORDER_CANCEL_BY_USER;
+import static com.sky.constant.MessageConstant.OUT_OF_DELIVERY_RANGE;
+import static com.sky.entity.Orders.TO_BE_CONFIRMED;
 
 /**
  * 订单服务实现类
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
     /**
      * 订单数据访问对象
      */
-    @Autowired
-    private OrderMapper orderMapper;
+    private final OrderMapper orderMapper;
     /**
      * 订单详情数据访问对象
      */
-    @Autowired
-    private OrderDetailMapper orderDetailMapper;
+    private final OrderDetailMapper orderDetailMapper;
     /**
      * 购物车数据访问对象
      */
-    @Autowired
-    private ShoppingCartMapper shoppingCartMapper;
+    private final ShoppingCartMapper shoppingCartMapper;
     /**
      * 用户数据访问对象
      */
-    @Autowired
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
     /**
      * 地址簿数据访问对象
      */
-    @Autowired
-    private AddressBookMapper addressBookMapper;
+    private final AddressBookMapper addressBookMapper;
 
-    @Autowired
-    private WebSocketServer webSocketServer;
+    private final WebSocketServer webSocketServer;
 
-    @Autowired
-    private StringRedisTemplate stringRedisTemplate;
+    private final StringRedisTemplate stringRedisTemplate;
     /**
      * 店铺地址
      */
@@ -204,7 +198,7 @@ public class OrderServiceImpl implements OrderService {
         // 更新订单状态为待接单，支付状态为已支付
         Orders orders = Orders.builder()
                 .id(ordersDB.getId())
-                .status(Orders.TO_BE_CONFIRMED)
+                .status(TO_BE_CONFIRMED)
                 .payStatus(Orders.PAID)
                 .checkoutTime(LocalDateTime.now())
                 .build();
@@ -212,7 +206,7 @@ public class OrderServiceImpl implements OrderService {
         orderMapper.update(orders);
 
         // 发送WebSocket消息给厨师
-        Map map=new HashMap();
+        Map<String,Object> map=new HashMap<>();
         map.put("type","1");
         map.put("orderId",ordersDB.getId());
         map.put("content","订单号: "+outTradeNo);
@@ -303,7 +297,7 @@ public class OrderServiceImpl implements OrderService {
 
 
             // 检查订单状态是否可以取消
-        if (ordersDB.getStatus() > 2) {
+        if (ordersDB.getStatus() > TO_BE_CONFIRMED) {
             throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
         }
 
@@ -312,13 +306,13 @@ public class OrderServiceImpl implements OrderService {
         orders.setId(ordersDB.getId());
 
         // 如果订单状态为待接单，设置支付状态为退款
-        if (ordersDB.getStatus().equals(Orders.TO_BE_CONFIRMED)) {
+        if (ordersDB.getStatus().equals(TO_BE_CONFIRMED)) {
             orders.setPayStatus(Orders.REFUND);
         }
 
         // 更新订单状态为已取消
         orders.setStatus(Orders.CANCELLED);
-        orders.setCancelReason("用户取消");
+        orders.setCancelReason(ORDER_CANCEL_BY_USER);
         orders.setCancelTime(LocalDateTime.now());
         orderMapper.update(orders);
     }
@@ -431,7 +425,7 @@ public class OrderServiceImpl implements OrderService {
      */
     public OrderStatisticsVO statistics() {
         // 统计各状态订单数量
-        Integer toBeConfirmed = orderMapper.countStatus(Orders.TO_BE_CONFIRMED);
+        Integer toBeConfirmed = orderMapper.countStatus(TO_BE_CONFIRMED);
         Integer confirmed = orderMapper.countStatus(Orders.CONFIRMED);
         Integer deliveryInProgress = orderMapper.countStatus(Orders.DELIVERY_IN_PROGRESS);
 
@@ -462,11 +456,11 @@ public class OrderServiceImpl implements OrderService {
      * @param ordersRejectionDTO 订单拒绝数据传输对象
      * @throws Exception 拒绝过程中可能出现的异常
      */
-    public void rejection(OrdersRejectionDTO ordersRejectionDTO) throws Exception {
+    public void rejection(OrdersRejectionDTO ordersRejectionDTO){
         // 查询订单信息
         Orders ordersDB = orderMapper.getById(ordersRejectionDTO.getId());
 
-        if (ordersDB == null || !ordersDB.getStatus().equals(Orders.TO_BE_CONFIRMED)) {
+        if (ordersDB == null || !ordersDB.getStatus().equals(TO_BE_CONFIRMED)) {
             throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
         }
 
@@ -491,7 +485,7 @@ public class OrderServiceImpl implements OrderService {
      * @param ordersCancelDTO 订单取消数据传输对象
      * @throws Exception 取消过程中可能出现的异常
      */
-    public void cancel(OrdersCancelDTO ordersCancelDTO) throws Exception {
+    public void cancel(OrdersCancelDTO ordersCancelDTO){
         // 查询订单信息
         Orders ordersDB = orderMapper.getById(ordersCancelDTO.getId());
 
@@ -565,7 +559,7 @@ public class OrderServiceImpl implements OrderService {
             throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
         }
 
-        Map map=new HashMap();
+        Map<String,Object> map=new HashMap<>();
         map.put("type",2);
         map.put("orderId",id);
         map.put("content","您的订单"+ordersDB.getNumber()+"已被催单");
@@ -594,7 +588,7 @@ public class OrderServiceImpl implements OrderService {
         // 模拟实现：直接返回成功，不做真实的距离计算
         // 如果需要模拟超出配送范围的情况，可以根据地址关键词判断
         if (address != null && (address.contains("外省") || address.contains("偏远"))) {
-            throw new OrderBusinessException("超出配送范围");
+            throw new OrderBusinessException(OUT_OF_DELIVERY_RANGE);
         }
         // 其他情况都认为在配送范围内
         log.info("模拟检查配送范围：地址 {} 在配送范围内", address);

@@ -7,6 +7,7 @@ import com.sky.service.OrderService;
 import com.wechat.pay.contrib.apache.httpclient.util.AesUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.entity.ContentType;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,11 +23,12 @@ import java.util.HashMap;
 @RestController
 @RequestMapping("/notify")
 @Slf4j
+@RequiredArgsConstructor
 public class PayNotifyController {
-    @Autowired
-    private OrderService orderService;
-    @Autowired
-    private WeChatProperties weChatProperties;
+
+    private final OrderService orderService;
+
+    private final WeChatProperties weChatProperties;
 
     /**
      * 支付成功回调

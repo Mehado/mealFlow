@@ -11,6 +11,7 @@ import com.sky.vo.SetmealVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -24,9 +25,10 @@ import java.util.List;
 @RequestMapping("/admin/setmeal")
 @Tag(name = "套餐管理")
 @Slf4j
+@RequiredArgsConstructor
 public class SetmealController {
-    @Autowired
-    private SetmealService setmealService;
+
+    private final SetmealService setmealService;
 
     /**
      * 新增套餐

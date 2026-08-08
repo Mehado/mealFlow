@@ -18,6 +18,7 @@ import com.sky.result.PageResult;
 import com.sky.service.SetmealService;
 import com.sky.vo.DishItemVO;
 import com.sky.vo.SetmealVO;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,16 +34,14 @@ import java.util.List;
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class SetmealServiceImpl implements SetmealService {
 
-    @Autowired
-    private SetmealMapper setmealMapper;
+    private final SetmealMapper setmealMapper;
 
-    @Autowired
-    private SetmealDishMapper setmealDishMapper;
+    private final SetmealDishMapper setmealDishMapper;
 
-    @Autowired
-    private DishMapper dishMapper;
+    private final DishMapper dishMapper;
 
 
     /**

@@ -10,6 +10,7 @@ import com.sky.vo.OrderOverViewVO;
 import com.sky.vo.SetmealOverViewVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,10 +26,11 @@ import java.time.LocalTime;
 @RequestMapping("/admin/workspace")
 @Slf4j
 @Tag(name = "工作台相关接口")
+@RequiredArgsConstructor
 public class WorkSpaceController {
 
-    @Autowired
-    private WorkspaceService workspaceService;
+
+    private final WorkspaceService workspaceService;
 
     /**
      * 工作台今日数据查询

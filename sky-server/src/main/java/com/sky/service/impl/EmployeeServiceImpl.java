@@ -1,5 +1,6 @@
 package com.sky.service.impl;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import java.util.concurrent.TimeUnit;
 import java.util.List;
@@ -29,18 +30,19 @@ import com.sky.result.PageResult;
 import com.sky.service.EmployeeService;
 
 @Service
+@RequiredArgsConstructor
 public class EmployeeServiceImpl implements EmployeeService {
 
     private static final String LOGIN_FAIL_COUNT_KEY="login:fail:count:";
     private static final int MAX_FAIL_COUNT = 5;
     private static final long LOCK_MINUTES = 15;
 
-    @Autowired
-    private EmployeeMapper employeeMapper;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
-    private StringRedisTemplate stringRedisTemplate;
+
+    private final EmployeeMapper employeeMapper;
+
+    private final PasswordEncoder passwordEncoder;
+
+    private final StringRedisTemplate stringRedisTemplate;
 
     /**
      * 员工登录
