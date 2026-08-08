@@ -4,11 +4,12 @@ package com.sky.controller.admin;
 import com.sky.annotations.RequireRole;
 import com.sky.constant.RoleConstant;
 import com.sky.result.Result;
+import com.sky.service.ShopService;
+import com.sky.service.impl.ShoppingCartServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 @RestController("adminShopController")
@@ -16,9 +17,12 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @Tag(name = "后台管理-店铺管理")
 public class ShopController {
-    public static final String KEY = "SHOP_STATUS";
+
+   @Autowired
+   private ShopService shopService;
     @Autowired
-    private RedisTemplate redisTemplate;
+    private ShoppingCartServiceImpl shoppingCartServiceImpl;
+
     /**
      * 设置店铺状态
      * @param status
@@ -28,7 +32,7 @@ public class ShopController {
     @PutMapping("/{status}")
     public Result setStatus(@PathVariable Integer status){
         log.info("设置店铺状态：{}",status==1?"":"关闭");
-        redisTemplate.opsForValue().set(KEY,status);
+        shopService.setStatus(status);
         return Result.success();
     }
 
@@ -40,7 +44,7 @@ public class ShopController {
     @GetMapping("/status")
     @Operation(summary = "获取店铺状态")
     public Result<Integer> getStatus(){
-        Integer status = (Integer) redisTemplate.opsForValue().get(KEY);
+        Integer status = shopService.getStatus();
         log.info("获取店铺状态为：{}",status==1?"营业中":"打烊中");
         return Result.success(status);
     }
