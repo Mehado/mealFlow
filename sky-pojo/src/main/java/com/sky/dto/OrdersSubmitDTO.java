@@ -1,6 +1,7 @@
 package com.sky.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
@@ -33,4 +34,7 @@ public class OrdersSubmitDTO implements Serializable {
     @NotNull(message = "总金额不能为空")
     @Positive(message = "总金额不能为负数")
     private BigDecimal amount;
+
+    @NotBlank(message = "请先获取下单令牌")
+    private String token;
 }

@@ -6,6 +6,10 @@ spring:
     active: dev
   main:
     allow-circular-references: true
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: ${sky.datasource.driver-class-name}

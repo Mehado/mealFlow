@@ -1,5 +1,6 @@
 package com.sky.controller.admin;
 
+import com.sky.annotations.RateLimit;
 import com.sky.annotations.RequireRole;
 import com.sky.annotations.SelfPermission;
 import com.sky.constant.JwtClaimsConstant;
@@ -36,6 +37,7 @@ public class EmployeeController {
     @Autowired
     private JwtProperties jwtProperties;
 
+    @RateLimit(limit=5,window=60)
     @Operation(summary = "员工登录")
     @PostMapping("/login")
     public Result<EmployeeLoginVO> login(@Valid @RequestBody EmployeeLoginDTO employeeLoginDTO) {

@@ -110,4 +110,10 @@ public interface OrderService {
      * @param id 订单ID
      */
     void reminder(Long id);
+
+    /**
+     * 获取下单幂等令牌（一次性，下单时携带）
+     * @return 令牌
+     */
+    String getSubmitToken();
 }

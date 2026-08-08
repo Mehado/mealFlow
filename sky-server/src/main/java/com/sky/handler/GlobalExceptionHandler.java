@@ -10,6 +10,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 
@@ -98,6 +99,18 @@ public class GlobalExceptionHandler {
         log.error("请求体解析失败：{}", ex.getMessage());
     // 返回错误结果，提示请求体格式错误或为空
         return Result.error("请求体格式错误或为空");
+    }
+
+
+    /**
+     * 文件上传失败异常捕获
+     * @param ex
+     * @return
+     */
+    @ExceptionHandler
+    public Result exceptionHandler(MaxUploadSizeExceededException ex) {
+        log.error("文件上传失败：{}", ex.getMessage());
+        return Result.error("文件大小超过限制,最大5MB");
     }
 
 }

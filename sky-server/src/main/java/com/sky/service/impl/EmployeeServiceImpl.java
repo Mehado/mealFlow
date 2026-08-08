@@ -1,5 +1,7 @@
 package com.sky.service.impl;
 
+import org.springframework.data.redis.core.StringRedisTemplate;
+import java.util.concurrent.TimeUnit;
 import java.util.List;
 
 import com.sky.constant.RoleConstant;
@@ -29,10 +31,16 @@ import com.sky.service.EmployeeService;
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
 
+    private static final String LOGIN_FAIL_COUNT_KEY="login:fail:count:";
+    private static final int MAX_FAIL_COUNT = 5;
+    private static final long LOCK_MINUTES = 15;
+
     @Autowired
     private EmployeeMapper employeeMapper;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     /**
      * 员工登录
@@ -43,6 +51,13 @@ public class EmployeeServiceImpl implements EmployeeService {
     public Employee login(EmployeeLoginDTO employeeLoginDTO) {
         String username = employeeLoginDTO.getUsername();
         String password = employeeLoginDTO.getPassword();
+
+        //防止爆破，先查该用户是否已经被锁定
+        String failCount= stringRedisTemplate.opsForValue().get(LOGIN_FAIL_COUNT_KEY+username);
+        if(failCount!=null && Integer.parseInt(failCount)>=MAX_FAIL_COUNT) {
+            throw new AccountLockedException("密码错误次数过多，账号已经被锁定，请"+LOCK_MINUTES+"分钟后再试");
+        }
+
 
         //1、根据用户名查询数据库中的数据
         Employee employee = employeeMapper.getByUsername(username);
@@ -57,9 +72,18 @@ public class EmployeeServiceImpl implements EmployeeService {
         // 对前端传过来的密码进行BCrypt加密之后再进行比对(自动提取数据库中密文的盐值进行加密)
         //password = DigestUtils.md5DigestAsHex(password.getBytes());
         if (!passwordEncoder.matches(password,employee.getPassword())) {
+            //密码错误：失败次数加1，并刷新锁定时间
+            Long count = stringRedisTemplate.opsForValue().increment(LOGIN_FAIL_COUNT_KEY+username);
+            stringRedisTemplate.expire(LOGIN_FAIL_COUNT_KEY+username, LOCK_MINUTES, TimeUnit.MINUTES);
+            if(count>=MAX_FAIL_COUNT) {
+                //达到上限，锁定账号
+                throw new AccountLockedException("密码错误次数过多，账号已经被锁定，请"+LOCK_MINUTES+"分钟后再试");
+            }
             //密码错误
             throw new PasswordErrorException(MessageConstant.PASSWORD_ERROR);
         }
+        //登陆成功，清楚失败计数
+        stringRedisTemplate.delete(LOGIN_FAIL_COUNT_KEY+username);
 
         if (employee.getStatus() == StatusConstant.DISABLE) {
             //账号被锁定

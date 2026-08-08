@@ -47,7 +47,7 @@ public class JwtTokenAdminInterceptor implements HandlerInterceptor {
 
         //2、校验令牌
         try {
-            log.info("jwt校验:{}", token);  //记录JWT校验的日志信息
+            log.info("收到token：{}", token != null ? "有" : "无");
         //解析JWT令牌，获取其中的声明信息
             Claims claims = JwtUtil.parseJWT(jwtProperties.getAdminSecretKey(), token);
         //从声明中获取员工ID，并设置为当前线程ID

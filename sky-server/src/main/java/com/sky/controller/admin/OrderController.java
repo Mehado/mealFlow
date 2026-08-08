@@ -1,5 +1,6 @@
 package com.sky.controller.admin;
 
+import com.sky.annotations.NoRepeatSubmit;
 import com.sky.annotations.RequireRole;
 import com.sky.constant.RoleConstant;
 import com.sky.dto.OrdersCancelDTO;
@@ -27,6 +28,7 @@ public class OrderController {
     @Autowired
     private OrderService orderService;
 
+
     @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER,RoleConstant.CHEF,RoleConstant.RIDER})
     @GetMapping("/conditionSearch")
     @Operation(summary = "订单搜索")
@@ -34,6 +36,7 @@ public class OrderController {
         PageResult pageResult = orderService.conditionSearch(ordersPageQueryDTO);
         return Result.success(pageResult);
     }
+
     @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER,RoleConstant.CHEF,RoleConstant.RIDER})
     @GetMapping("/statistics")
     @Operation(summary = "各个状态的订单数量统计")
@@ -41,6 +44,7 @@ public class OrderController {
         OrderStatisticsVO orderStatisticsVO = orderService.statistics();
         return Result.success(orderStatisticsVO);
     }
+
     @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER,RoleConstant.CHEF,RoleConstant.RIDER})
     @GetMapping("/details/{id}")
     @Operation(summary = "查询订单详情")
@@ -48,6 +52,8 @@ public class OrderController {
         OrderVO orderVO = orderService.details(id);
         return Result.success(orderVO);
     }
+
+    @NoRepeatSubmit
     @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER})
     @PutMapping("/confirm")
     @Operation(summary = "接单")
@@ -55,6 +61,8 @@ public class OrderController {
         orderService.confirm(ordersConfirmDTO);
         return Result.success();
     }
+
+    @NoRepeatSubmit
     @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER})
     @PutMapping("/rejection")
     @Operation(summary = "拒单")
@@ -62,6 +70,8 @@ public class OrderController {
         orderService.rejection(ordersRejectionDTO);
         return Result.success();
     }
+
+    @NoRepeatSubmit
     @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER})
     @PutMapping("/cancel")
     @Operation(summary = "取消订单")
@@ -69,6 +79,7 @@ public class OrderController {
         orderService.cancel(ordersCancelDTO);
         return Result.success();
     }
+
     @RequireRole({RoleConstant.OWNER,RoleConstant.RIDER})
     @PutMapping("/delivery/{id}")
     @Operation(summary = "派送订单")
@@ -76,6 +87,7 @@ public class OrderController {
         orderService.delivery(id);
         return Result.success();
     }
+
     @RequireRole({RoleConstant.OWNER,RoleConstant.RIDER})
     @PutMapping("/complete/{id}")
     @Operation(summary = "完成订单")
@@ -83,6 +95,7 @@ public class OrderController {
         orderService.complete(id);
         return Result.success();
     }
+
     @RequireRole
     @PutMapping("/simulatePayNotify/{orderNumber}")
     @Operation(summary = "模拟支付成功回调")

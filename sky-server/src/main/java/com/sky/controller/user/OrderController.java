@@ -1,6 +1,8 @@
 package com.sky.controller.user;
 
 
+import com.sky.annotations.NoRepeatSubmit;
+import com.sky.annotations.RateLimit;
 import com.sky.dto.OrdersPaymentDTO;
 import com.sky.dto.OrdersSubmitDTO;
 import com.sky.result.PageResult;
@@ -25,11 +27,23 @@ public class OrderController {
 
     @Autowired
     private OrderService orderService;
+
+    /**
+     * 获取下单幂令牌
+     */
+    @RateLimit(limit = 30,window = 60)
+    @GetMapping("/token")
+    @Operation(summary = "获取下单幂等令牌")
+    public Result<String> submitToken() {
+        return Result.success(orderService.getSubmitToken());
+    }
+
     /**
      * 用户下单
      * @param ordersSubmitDTO
      * @return
      */
+    @RateLimit(limit =15,window=60)
     @PostMapping("/submit")
     @Operation(summary = "用户下单")
     public Result<OrderSubmitVO> submit(@Valid @RequestBody OrdersSubmitDTO ordersSubmitDTO) {
@@ -44,6 +58,7 @@ public class OrderController {
      * @param ordersPaymentDTO
      * @return
      */
+    @NoRepeatSubmit
     @PutMapping("/payment")
     @Operation(summary = "订单支付")
     public Result<OrderPaymentVO> payment(@Valid @RequestBody OrdersPaymentDTO ordersPaymentDTO) {

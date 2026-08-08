@@ -24,16 +24,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.net.http.WebSocket;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -71,6 +71,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private WebSocketServer webSocketServer;
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
     /**
      * 店铺地址
      */
@@ -83,6 +86,19 @@ public class OrderServiceImpl implements OrderService {
     @Value("${sky.baidu.ak}")
     private String ak;
 
+
+    //幂等token消费脚本：token存在且属于当前用户才删除并返回1，否则返回0
+    private static final DefaultRedisScript<Long> IDEMPOTENT_SCRIPT = new DefaultRedisScript<>();
+
+    static {
+        IDEMPOTENT_SCRIPT.setResultType(Long.class);
+        IDEMPOTENT_SCRIPT.setScriptText(
+                "if redis.call('get', KEYS[1]) == ARGV[1] then " +
+                        "return redis.call('del', KEYS[1]) " +
+                        "else return 0 end"
+        );
+    }
+
     /**
      * 提交订单
      * @param ordersSubmitDTO 提交订单的数据传输对象
@@ -90,6 +106,14 @@ public class OrderServiceImpl implements OrderService {
      */
     @Transactional
     public OrderSubmitVO submitOrder(OrdersSubmitDTO ordersSubmitDTO) {
+        // 检查幂等令牌
+        Long consumed=stringRedisTemplate.execute(
+                IDEMPOTENT_SCRIPT,
+                Collections.singletonList("order:submit:token:"+ordersSubmitDTO.getToken()),
+                String.valueOf(BaseContext.getCurrentId()));
+                if(consumed==null|| consumed!=1L){
+                    throw new OrderBusinessException("请勿重复提交订单");
+                }
 
         // 获取地址簿信息
         AddressBook addressBook = addressBookMapper.getById(ordersSubmitDTO.getAddressBookId());
@@ -238,6 +262,14 @@ public class OrderServiceImpl implements OrderService {
     public OrderVO details(Long id) {
         // 获取订单基本信息
         Orders orders = orderMapper.getById(id);
+
+        //判空校验
+        if (orders == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        //归属校验
+        if(!orders.getUserId().equals(BaseContext.getCurrentId())){
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);}
         // 获取订单详情列表
         List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderId(orders.getId());
 
@@ -261,8 +293,11 @@ public class OrderServiceImpl implements OrderService {
         if (ordersDB == null) {
             throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
         }
+        if (!ordersDB.getUserId().equals(BaseContext.getCurrentId())) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);}
 
-        // 检查订单状态是否可以取消
+
+            // 检查订单状态是否可以取消
         if (ordersDB.getStatus() > 2) {
             throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
         }
@@ -289,6 +324,14 @@ public class OrderServiceImpl implements OrderService {
  * @param id 订单ID，用于获取该订单的详细信息
  */
     public void repetition(Long id) {
+        //先查订单，做归属校验
+        Orders ordersDB = orderMapper.getById(id);
+        if (ordersDB == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        if (!ordersDB.getUserId().equals(BaseContext.getCurrentId())) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
     // 获取当前登录用户的ID
         Long userId = BaseContext.getCurrentId();
 
@@ -501,8 +544,12 @@ public class OrderServiceImpl implements OrderService {
     public void reminder(Long id) {
         Orders ordersDB=orderMapper.getById(id);
         if (ordersDB == null) {
-                       throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+                       throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
                    }
+        // 新增：归属校验
+        if (!ordersDB.getUserId().equals(BaseContext.getCurrentId())) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
 
         Map map=new HashMap();
         map.put("type",2);
@@ -510,6 +557,19 @@ public class OrderServiceImpl implements OrderService {
         map.put("content","您的订单"+ordersDB.getNumber()+"已被催单");
 
         webSocketServer.sendToAllClient(JSON.toJSONString(map));
+    }
+
+    /**
+     * 获取下单幂等令牌:生成随机UUID，存入redis，10分钟有效
+     */
+    public String getSubmitToken() {
+        String token = UUID.randomUUID().toString().replace("-", "");
+        Long userId = BaseContext.getCurrentId();
+        stringRedisTemplate.opsForValue().set(
+                "order:submitToken:" + token,
+                String.valueOf(userId),
+                10, TimeUnit.MINUTES);
+        return token;
     }
 
     /**
