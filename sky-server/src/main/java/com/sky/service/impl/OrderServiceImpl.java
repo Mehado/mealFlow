@@ -231,8 +231,8 @@ public class OrderServiceImpl implements OrderService {
         PageHelper.startPage(pageNum, pageSize);
         // 构建查询条件
         OrdersPageQueryDTO ordersPageQueryDTO = new OrdersPageQueryDTO();
-        ordersPageQueryDTO.setUserId(BaseContext.getCurrentId());
-        ordersPageQueryDTO.setStatus(status);
+        ordersPageQueryDTO.setUserId(BaseContext.getCurrentId());  // 设置当前用户ID
+        ordersPageQueryDTO.setStatus(status);  // 设置订单状态
 
         // 执行分页查询
         Page<Orders> page = orderMapper.pageQuery(ordersPageQueryDTO);
@@ -241,13 +241,18 @@ public class OrderServiceImpl implements OrderService {
         List<OrderVO> list = new ArrayList<>();
 
         if (page != null && page.getTotal() > 0) {
-            for (Orders orders : page) {
-                Long ordersId = orders.getId();
-                List<OrderDetail> orderDetails = orderDetailMapper.getByOrderId(ordersId);
-
+            //收集本页订单所有订单id
+            List<Long> orderIds = page.stream().map(Orders::getId).collect(Collectors.toList());
+            //一次IN查询所有订单详情
+            List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderIds(orderIds);
+            //按订单id在内存中分组
+            Map<Long,List<OrderDetail>> orderDetailMap = orderDetailList.stream()
+                    .collect(Collectors.groupingBy(OrderDetail::getOrderId));
+            for(Orders orders : page){
                 OrderVO orderVO = new OrderVO();
                 BeanUtils.copyProperties(orders, orderVO);
-                orderVO.setOrderDetailList(orderDetails);
+                //getOrDefault兜底，没有明细的订单拿到空列表，避免NPE
+                orderVO.setOrderDetailList(orderDetailMap.getOrDefault(orders.getId(),new ArrayList<>()));
                 list.add(orderVO);
             }
         }
@@ -384,10 +389,22 @@ public class OrderServiceImpl implements OrderService {
 
         List<Orders> ordersList = page.getResult();
         if (!CollectionUtils.isEmpty(ordersList)) {
+            // ① 收集本页所有订单id
+            List<Long> orderIds = ordersList
+                    .stream()
+                    .map(Orders::getId)
+                    .collect(Collectors.toList());
+            // ② 一次 IN 查询
+            List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderIds(orderIds);
+            // ③ 按订单id分组
+            Map<Long, List<OrderDetail>> orderDetailMap = orderDetailList.stream()
+                    .collect(Collectors.groupingBy(OrderDetail::getOrderId));
+
             for (Orders orders : ordersList) {
                 OrderVO orderVO = new OrderVO();
                 BeanUtils.copyProperties(orders, orderVO);
-                String orderDishes = getOrderDishesStr(orders);
+                // ④ 把该订单的明细直接传进去拼字符串
+                String orderDishes = getOrderDishesStr(orderDetailMap.getOrDefault(orders.getId(), new ArrayList<>()));
                 orderVO.setOrderDishes(orderDishes);
                 orderVOList.add(orderVO);
             }
@@ -397,12 +414,9 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * 获取订单菜品字符串
-     * @param orders 订单对象
      * @return 菜品字符串
      */
-    private String getOrderDishesStr(Orders orders) {
-        List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderId(orders.getId());
-
+    private String getOrderDishesStr(List<OrderDetail> orderDetailList) {
         List<String> orderDishList = orderDetailList.stream().map(x -> {
             String orderDish = x.getName() + "*" + x.getNumber() + ";";
             return orderDish;

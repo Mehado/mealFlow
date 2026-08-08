@@ -11,5 +11,18 @@
                      #{od.dishFlavor},#{od.amount},#{od.number},#{od.setmealId})
                 </foreach>
     </insert>
+    <select id="getByOrderIds" resultType="com.sky.entity.OrderDetail">
+        select * from order_detail
+        where order_id in
+        <if test="orderIds != null and orderIds.size() > 0">
+            <foreach collection="orderIds" item="orderId" open="(" separator="," close=")">
+                #{orderId}
+            </foreach>
+        </if>
+        <if test="orderIds == null or orderIds.size() == 0">
+            (null)
+        </if>
+    </select>
+
 
 </mapper>
