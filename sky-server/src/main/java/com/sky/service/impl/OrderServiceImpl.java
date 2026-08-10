@@ -259,6 +259,30 @@ public class OrderServiceImpl implements OrderService {
      * @return 订单视图对象
      */
     public OrderVO details(Long id) {
+        OrderVO orderVO = buildDetails(id);
+        //归属校验
+        Orders ordersDB = orderMapper.getById(id);
+        if (ordersDB != null && !ordersDB.getUserId().equals(BaseContext.getCurrentId())) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        return orderVO;
+    }
+
+    /**
+     * 管理端订单详情：不校验用户归属（管理端当前身份是员工）
+     * @param id 订单ID
+     * @return OrderVO 订单详情视图对象
+     */
+    public OrderVO adminDetails(Long id) {
+        return buildDetails(id);
+    }
+
+    /**
+     * 组装订单详情
+     * @param id 订单ID
+     * @return OrderVO 订单详情视图对象
+     */
+    private OrderVO buildDetails(Long id) {
         // 获取订单基本信息
         Orders orders = orderMapper.getById(id);
 
@@ -266,9 +290,6 @@ public class OrderServiceImpl implements OrderService {
         if (orders == null) {
             throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
         }
-        //归属校验
-        if(!orders.getUserId().equals(BaseContext.getCurrentId())){
-            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);}
         // 获取订单详情列表
         List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderId(orders.getId());
 

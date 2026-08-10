@@ -24,6 +24,7 @@ import com.sky.dto.EmployeePageQueryDTO;
 import com.sky.entity.Employee;
 import com.sky.exception.AccountLockedException;
 import com.sky.exception.AccountNotFoundException;
+import com.sky.exception.EmployeeOperationException;
 import com.sky.exception.PasswordErrorException;
 import com.sky.mapper.EmployeeMapper;
 import com.sky.result.PageResult;
@@ -98,6 +99,12 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     //新增员工
     public void save(EmployeeDTO employeeDTO) {
+        // 老板账号全局唯一：已存在老板时不允许再创建老板
+        if (RoleConstant.OWNER.equals(employeeDTO.getRole())
+                && employeeMapper.countByRole(RoleConstant.OWNER) > 0) {
+            throw new EmployeeOperationException("老板账号只能有一个，系统已存在老板账号");
+        }
+
         Employee employee = new Employee();
         //对象属性拷贝
         BeanUtils.copyProperties(employeeDTO, employee);
@@ -108,7 +115,13 @@ public class EmployeeServiceImpl implements EmployeeService {
             employee.setRole(RoleConstant.STAFF);
         }
 
-        employee.setPassword(passwordEncoder.encode(PasswordConstant.DEFAULT_PASSWORD));  // 使用BCrypt加密默认密码
+        // 初始密码：优先使用表单传入的密码，未传则使用默认密码
+        String rawPassword = employeeDTO.getPassword();
+        if (rawPassword != null && !rawPassword.trim().isEmpty()) {
+            employee.setPassword(passwordEncoder.encode(rawPassword.trim()));
+        } else {
+            employee.setPassword(passwordEncoder.encode(PasswordConstant.DEFAULT_PASSWORD));
+        }
 
         employeeMapper.insert(employee);
     }
@@ -127,6 +140,13 @@ public class EmployeeServiceImpl implements EmployeeService {
     //启用禁用员工账号
     @Override
     public void startOrStop(Integer status, Long id) {
+        // 老板账号保护：不允许禁用老板，避免项目失去可登录的管理账号
+        Employee target = employeeMapper.getById(id);
+        if (target != null
+                && RoleConstant.OWNER.equals(target.getRole())
+                && StatusConstant.DISABLE.equals(status)) {
+            throw new EmployeeOperationException("老板账号不能禁用，请保留至少一个可登录的老板账号");
+        }
         //update employee set status = ? where id = ?
         Employee employee = Employee.builder()
                 .status(status)
@@ -146,6 +166,21 @@ public class EmployeeServiceImpl implements EmployeeService {
     //编辑员工信息
     @Override
     public void update(EmployeeDTO employeeDTO) {
+        // 老板账号保护：老板角色不可改走；其他角色也不可改成老板（老板唯一）
+        if (employeeDTO.getId() != null) {
+            Employee dbEmployee = employeeMapper.getById(employeeDTO.getId());
+            if (dbEmployee != null) {
+                boolean dbIsOwner = RoleConstant.OWNER.equals(dbEmployee.getRole());
+                String newRole = employeeDTO.getRole();
+                if (dbIsOwner && newRole != null && !RoleConstant.OWNER.equals(newRole)) {
+                    throw new EmployeeOperationException("老板账号的角色不能修改");
+                }
+                if (!dbIsOwner && RoleConstant.OWNER.equals(newRole)) {
+                    throw new EmployeeOperationException("老板账号只能有一个，系统已存在老板账号");
+                }
+            }
+        }
+
         Employee employee = new Employee();
         BeanUtils.copyProperties(employeeDTO, employee);
 //        employee.setUpdateTime(LocalDateTime.now());

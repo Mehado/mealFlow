@@ -55,6 +55,14 @@ public interface EmployeeMapper {
     Employee getById(Long id);
 
     /**
+     * 统计指定角色的员工数量
+     * @param role 角色
+     * @return 数量
+     */
+    @Select("select count(*) from employee where role = #{role}")
+    Long countByRole(String role);
+
+    /**
      * 修改密码
      * @param id
      * @param encodedPassword

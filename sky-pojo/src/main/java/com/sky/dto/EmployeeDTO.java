@@ -2,6 +2,7 @@ package com.sky.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -28,5 +29,11 @@ public class EmployeeDTO implements Serializable {
     private String idNumber;
 
     private String role;
+
+    /**
+     * 新增员工时的初始密码（可空，为空使用默认密码）
+     */
+    @Size(min = 6, max = 16, message = "密码长度在6到16位之间")
+    private String password;
 
 }
