@@ -16,6 +16,12 @@ sky:
       database: 0
       port: 6379
       password: ENC(wLMQPivDv4CWM6dbf9sAi+PMB/ujGSk390K9ZGv6GSwfhTwpOVLWoEC4P4CLE96c)
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: ENC(VSRwbwkCRPrz2dyrMRK9ynjiIjboG9aKBwXrNQAwWqJYFbyHHudvIqfs2LbUspoF)
+    password: ENC(VSRwbwkCRPrz2dyrMRK9ynjiIjboG9aKBwXrNQAwWqJYFbyHHudvIqfs2LbUspoF)
+
 
   wechat:
     appid: wx0c9d3e46195ee4d8

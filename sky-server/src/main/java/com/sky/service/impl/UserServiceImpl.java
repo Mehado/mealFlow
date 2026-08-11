@@ -59,15 +59,22 @@ public class UserServiceImpl implements UserService {
     }
 
     //调用微信接口服务，获得当前微信用户的openid
+//    private String getOpenid(String code) {
+//        Map<String, String> map = new HashMap<>();
+//        map.put("appid", weChatProperties.getAppid());
+//        map.put("secret", weChatProperties.getSecret());
+//        map.put("js_code", code);
+//        map.put("grant_type", "authorization_code");
+//        String json = HttpClientUtil.doGet(WX_LOGIN, map);
+//        JSONObject jsonObject = JSON.parseObject(json);
+//        String openid = jsonObject.getString("openid");
+//        return openid;
+    //}
     private String getOpenid(String code) {
-        Map<String, String> map = new HashMap<>();
-        map.put("appid", weChatProperties.getAppid());
-        map.put("secret", weChatProperties.getSecret());
-        map.put("js_code", code);
-        map.put("grant_type", "authorization_code");
-        String json = HttpClientUtil.doGet(WX_LOGIN, map);
-        JSONObject jsonObject = JSON.parseObject(json);
-        String openid = jsonObject.getString("openid");
-        return openid;
+        // 本地调试：跳过真实微信校验，所有用户归到同一个固定 openid
+        // 真实环境：注释掉下面这段，改回调微信 code2session 接口
+        log.info("mock微信登录，code={}，使用固定openid", code);
+        return "mock_openid_fixed";
     }
+
 }
