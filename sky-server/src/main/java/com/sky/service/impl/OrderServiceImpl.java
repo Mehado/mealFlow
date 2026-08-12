@@ -20,6 +20,7 @@ import com.sky.vo.OrderVO;
 import com.sky.websocket.WebSocketServer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -167,12 +168,18 @@ public class OrderServiceImpl implements OrderService {
                 .orderAmount(orders.getAmount())
                 .build();
 
-        //发送延迟关单消息：订单进入15分钟延迟，超时未支付由死信消费者关单
+//        //发送延迟关单消息：订单进入15分钟延迟，超时未支付由死信消费者关单
+//        rabbitTemplate.convertAndSend(
+//                RabbitMQConfig.ORDER_EXCHANGE,
+//                RabbitMQConfig.ORDER_DELAY_ROUTING_KEY,
+//                orders.getId());
+        //发送延迟关单消息：CorrelationData用于发送确认，id带上orderId方便排查
+        CorrelationData cd =new CorrelationData("order-close-" + orders.getId() + "-" + UUID.randomUUID());
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.ORDER_EXCHANGE,
                 RabbitMQConfig.ORDER_DELAY_ROUTING_KEY,
-                orders.getId());
-
+                orders.getId(),
+                cd);
         return orderSubmitVO;
     }
 

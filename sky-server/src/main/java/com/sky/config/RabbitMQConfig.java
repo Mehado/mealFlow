@@ -22,6 +22,12 @@ public class RabbitMQConfig {
     public static final String ORDER_DEAD_EXCHANGE = "order.dead.exchange";
     public static final String ORDER_DEAD_QUEUE = "order.dead.queue";
     public static final String ORDER_DEAD_ROUTING_KEY = "order.dead";
+    public static final String ORDER_RETRY_EXCHANGE = "order.retry.exchange";
+    public static final String ORDER_RETRY_QUEUE = "order.retry.queue";
+    public static final String ORDER_RETRY_ROUTING_KEY = "order.retry";
+
+    /**消费失败最大重试次数*/
+    public static final int MAX_RETRY = 3;
 
     /**
      * 下单直连交换机
@@ -39,7 +45,7 @@ public class RabbitMQConfig {
         Map<String, Object> args = new HashMap<>();
         args.put("x-message-ttl", 15 * 1000);//15分钟（毫秒）
         args.put("x-dead-letter-exchange", ORDER_DEAD_EXCHANGE);//过期后发到哪个交换机
-        args.put("x-dead-letter_routing-key", ORDER_DEAD_ROUTING_KEY);
+        args.put("x-dead-letter-routing-key", ORDER_DEAD_ROUTING_KEY);
         return new Queue(ORDER_DELAY_QUEUE, true, false, false, args);
     }
 
@@ -77,6 +83,29 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(orderDeadQueue())
                 .to(orderDeadExchange())
                 .with(ORDER_DEAD_ROUTING_KEY);
+    }
+    /**重试交换机：消费失败的消息发达这里，5秒后重新投递*/
+    @Bean
+    public DirectExchange orderRetryExchange() {
+        return new DirectExchange(ORDER_RETRY_EXCHANGE);
+    }
+    /**
+     * 重试队列：只做“暂存”。真正的处理逻辑还是回到消费者
+     */
+    @Bean
+    public Queue orderRetryQueue() {
+        return new Queue(ORDER_RETRY_QUEUE, true);
+    }
+/**
+ * 创建一个绑定，将重试队列与重试交换器关联起来，并指定路由键
+ *
+ * @return Binding 返回一个Binding对象，表示队列、交换器和路由键之间的绑定关系
+ */
+    @Bean
+    public Binding orderRetryBinding() {
+        return BindingBuilder.bind(orderRetryQueue())
+                .to(orderRetryExchange())
+                .with(ORDER_RETRY_ROUTING_KEY);
     }
 
 }
