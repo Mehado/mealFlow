@@ -1,5 +1,6 @@
 package com.sky.service.impl;
 
+import com.alibaba.fastjson.TypeReference;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
@@ -14,6 +15,7 @@ import com.sky.mapper.DishMapper;
 import com.sky.mapper.SetmealDishMapper;
 import com.sky.result.PageResult;
 import com.sky.service.DishService;
+import com.sky.utils.RedisCacheClient;
 import com.sky.vo.DishVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +27,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -36,12 +40,13 @@ public class DishServiceImpl implements DishService {
 
     private final DishFlavorMapper dishFlavorMapper;
 
+    private final RedisCacheClient cacheClient;
+
     private final SetmealDishMapper setmealDishMapper;
     /**
      * 新增菜品和对应的口味
      * @param dishDTO
      */
-    @Cacheable(cacheNames = "dishCache",key="#dishDTO.categoryId")
     @Transactional
     public void saveWithFlavor(DishDTO dishDTO) {
         log.info("新增菜品:{}", dishDTO);
@@ -61,6 +66,8 @@ public class DishServiceImpl implements DishService {
             });
             dishFlavorMapper.insertBatch(flavors);
         }
+        //cache-Aside:先写库，再删除缓存
+        cacheClient.delete(dishCacheKey(dishDTO.getCategoryId()));
     }
 
 
@@ -81,16 +88,18 @@ public class DishServiceImpl implements DishService {
      * 根据id批量删除菜品
      * @param ids
      */
-    @CacheEvict(cacheNames = "dishCache",allEntries = true)
     @Transactional
     public void deleteBatch(List<Long> ids) {
         log.info("根据id批量删除菜品:{}",ids);
+
+        Set<Long> categoryIds=new HashSet<>();
         //判断当前菜品是否可以删除--是否在起售中
         for(Long id:ids){
             Dish dish=dishMapper.getById(id);
             if (dish.getStatus()== StatusConstant.ENABLE){
                 throw new DeletionNotAllowedException(MessageConstant.DISH_ON_SALE);
             }
+            categoryIds.add(dish.getCategoryId());
         }
         //判断当前菜品是否可以删除--是否有关联的订单
         List<Long> setmealIds=setmealDishMapper.getSetmealIdsByDishIds(ids);
@@ -104,6 +113,9 @@ public class DishServiceImpl implements DishService {
 //        }
         dishMapper.deleteByIds(ids);
         dishFlavorMapper.deleteByDishIds(ids);
+
+        //只删除受影响的分类缓存，不再无脑清空全部
+        categoryIds.forEach(cid->cacheClient.delete(dishCacheKey(cid)));
     }
 
     /**
@@ -129,23 +141,34 @@ public class DishServiceImpl implements DishService {
 
     /**
      * 修改菜品信息和口味
-     * @param dishDTO
+     * @param dishDTO 包含菜品和口味信息的DTO对象
      */
-    @CacheEvict(cacheNames = "dishCache",allEntries = true)
     public void updateWithFlavor(DishDTO dishDTO) {
+        //改之前先查旧的分类信息，用于后续缓存处理
+        Dish old=dishMapper.getById(dishDTO.getId());
+
+    // 创建新的Dish对象，将DTO中的属性复制到Dish对象中
         Dish dish=new Dish();
         BeanUtils.copyProperties(dishDTO,dish);
         //修改菜品表基本信息
         dishMapper.update(dish);
-        //删除菜品口味表信息
+        //删除菜品口味表信息，为重新插入做准备
         dishFlavorMapper.deleteByDishId(dish.getId());
         //新增菜品口味表信息
         List<DishFlavor> flavors=dishDTO.getFlavors();
+    // 检查flavors列表不为空
         if ((flavors != null) && (!flavors.isEmpty())) {
+        // 为每个口味设置对应的菜品ID
             flavors.forEach(dishFlavor -> {
                 dishFlavor.setDishId(dishDTO.getId());
             });
+        // 批量插入口味信息
             dishFlavorMapper.insertBatch(flavors);
+        }
+        //删除旧的分类缓存，如果改了分类，新分类缓存也删掉
+        cacheClient.delete(dishCacheKey(old.getCategoryId()));
+        if(dishDTO.getCategoryId()!=null&&!dishDTO.getCategoryId().equals(old.getCategoryId())){
+            cacheClient.delete(dishCacheKey(dishDTO.getCategoryId()));
         }
 
     }
@@ -166,40 +189,93 @@ public class DishServiceImpl implements DishService {
 
     /**
      * 条件查询菜品和口味
-     * @param dish
-     * @return
+     * @param dish 查询条件对象，包含菜品分类ID等信息
+     * @return 返回包含菜品和口味信息的VO列表
      */
-    @Cacheable(cacheNames="dishCache",key="#dish.categoryId")
     public List<DishVO> listWithFlavor(Dish dish) {
-        List<Dish> dishList = dishMapper.list(dish);
+    // 获取菜品分类ID
+        Long categoryId=dish.getCategoryId();
+    // 构建缓存键，使用分类ID作为键的一部分
+        String cacheKey=dishCacheKey(categoryId);
 
-        List<DishVO> dishVOList = new ArrayList<>();
-
-        for (Dish d : dishList) {
-            DishVO dishVO = new DishVO();
-            BeanUtils.copyProperties(d, dishVO);
-
-            //根据菜品id查询对应的口味
-            List<DishFlavor> flavors = dishFlavorMapper.getByDishId(d.getId());
-
-            dishVO.setFlavors(flavors);
-            dishVOList.add(dishVO);
+        //先查询缓存，尝试从缓存中获取数据
+        List<DishVO> cached=cacheClient.getJson(cacheKey,new TypeReference<List<DishVO>>() {});
+    // 如果缓存中存在数据，直接返回
+        if (cached!=null){
+            return cached;
         }
-
-        return dishVOList;
+        //缓存中没有，回源DB
+        if(!cacheClient.tryLock("dish:"+categoryId,10)) {
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            cached = cacheClient.getJson(cacheKey, new TypeReference<List<DishVO>>() {
+            });
+            if (cached != null) {
+                return cached;
+            }
+            //等了一次还是没有，重建线程可能刚失败，因此直接查库，不缓存防止脏数据
+            return queryAndCache(categoryId, cacheKey);
+        }
+        try{
+            //双重验证：拿到锁后发现别的线程已经重建完成了
+            cached=cacheClient.getJson(cacheKey,new TypeReference<List<DishVO>>() {});
+            if (cached!=null){
+                return cached;
+            }
+            return queryAndCache(categoryId,cacheKey);
+        }finally {
+            cacheClient.unlock("dish:"+categoryId);
+        }
     }
 
     /**
      * 菜品起售停售详情
-     * @param status
-     * @param id
+     * @param status 菜品状态（起售/停售）
+     * @param id 菜品ID
      */
-    @CacheEvict(cacheNames = "dishCache",allEntries = true)
+
     public void startOrStop(Integer status, Long id) {
+        // 构建Dish对象，设置菜品ID和状态
         Dish dish = Dish.builder()
                 .id(id)
                 .status(status)
                 .build();
+        // 更新菜品信息到数据库
         dishMapper.update(dish);
+
+        // 从数据库获取更新后的菜品信息
+        Dish db=dishMapper.getById(id);
+        // 清除对应分类的菜品缓存
+        cacheClient.delete(dishCacheKey(db.getCategoryId()));
     }
+
+    /** 缓存key统一管理：避免散落各处写错*/
+    private String dishCacheKey(Long categoryId){
+        return "dish:category:" + categoryId;
+    }
+    /**回源DB 并填回缓存：空值缓存防止穿透，随机TTL防止雪崩*/
+    private List<DishVO> queryAndCache(Long categoryId,String cacheKey) {
+        Dish dish=Dish.builder().categoryId(categoryId).status(StatusConstant.ENABLE).build();
+        List<Dish> dishList=dishMapper.list(dish);
+
+        List<DishVO> dishVOList=new ArrayList<>();
+        for (Dish d : dishList) {
+            DishVO dishVO = new DishVO();
+            BeanUtils.copyProperties(d, dishVO);
+            dishVO.setFlavors(dishFlavorMapper.getByDishId(d.getId()));
+            dishVOList.add(dishVO);
+            }
+        if(dishVOList.isEmpty()){
+            //空值缓存防止穿透
+            cacheClient.setJson(cacheKey,RedisCacheClient.NULL_MARK,60,0);
+        }else{
+            //随机TTL防止雪崩
+            cacheClient.setJson(cacheKey,dishVOList,300,60);
+        }
+        return dishVOList;
+    }
+
 }
