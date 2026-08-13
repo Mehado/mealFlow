@@ -3,7 +3,7 @@
 -- 说明：MySQL 的 ADD COLUMN 不支持 IF NOT EXISTS，
 --       若列已存在会报错，可忽略该错误直接执行下方 UPDATE。
 -- ============================================================
-USE sky_take_out;
+USE mealflow;
 
 -- 1. employee 表增加角色列（默认 STAFF，最小权限）
 ALTER TABLE employee

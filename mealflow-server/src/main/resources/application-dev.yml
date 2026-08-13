@@ -3,7 +3,7 @@ sky:
     driver-class-name: com.mysql.cj.jdbc.Driver
     host: localhost
     port: 3306
-    database: sky_take_out
+    database: mealflow
     username: root
     password: ENC(jwAZvWvXyCP5PZIZWsHM0zlJp3T/xP5qWlTkP2Ns+X/UrVefPa2R+VrWzrxWqLN1)
   alioss:

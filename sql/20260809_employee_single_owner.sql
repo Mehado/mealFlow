@@ -4,7 +4,7 @@
 -- 否则生成 NULL（NULL 不参与唯一约束），从而保证最多一个老板。
 -- 注意：若已执行过本脚本，重复执行 ALTER 会报错，可忽略。
 -- ============================================================
-USE sky_take_out;
+USE mealflow;
 SET NAMES utf8mb4;
 
 ALTER TABLE employee

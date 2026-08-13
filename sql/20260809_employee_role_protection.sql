@@ -4,7 +4,7 @@
 -- 2. 禁止禁用 role='OWNER' 的员工（status -> 0）
 -- 防止误操作导致项目失去可登录的管理账号
 -- ============================================================
-USE sky_take_out;
+USE mealflow;
 SET NAMES utf8mb4;
 
 DROP TRIGGER IF EXISTS trg_employee_block_delete_owner;
