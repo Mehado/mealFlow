@@ -22,9 +22,9 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 public class ShoppingCartServiceImpl implements ShoppingCartService {
-    private ShoppingCartMapper shoppingCartMapper;
-    private DishMapper dishMapper;
-    private SetmealMapper setmealMapper;
+    private final ShoppingCartMapper shoppingCartMapper;
+    private final DishMapper dishMapper;
+    private final SetmealMapper setmealMapper;
 /**
  * 添加购物车的方法
  * @param shoppingCartDTO 购物车数据传输对象，包含商品信息、数量等信息
