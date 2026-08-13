@@ -6,6 +6,7 @@ import com.sky.dto.GoodsSalesDTO;
 import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.entity.Orders;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.time.LocalDate;
@@ -87,4 +88,15 @@ public interface OrderMapper {
      * @return
      */
     List<GoodsSalesDTO> getSalesTop10(LocalDateTime begin, LocalDateTime end);
+
+    /**
+     * 条件取消：仅当订单还是待付款时取消，返回影响行数（防止并发双回补）
+     */
+    int cancelByIdIfPendingPayment(@Param("id") Long id,@Param("now") LocalDateTime now);
+
+    int cancelByIdIfStatus(@Param("id") Long id,
+                           @Param("expectedStatus") Integer expectedStatus,
+                           @Param("orders") Orders orders);
+
+
 }

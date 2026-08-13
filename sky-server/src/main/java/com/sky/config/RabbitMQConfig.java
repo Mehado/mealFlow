@@ -43,7 +43,7 @@ public class RabbitMQConfig {
     @Bean
     public Queue orderDelayQueue() {
         Map<String, Object> args = new HashMap<>();
-        args.put("x-message-ttl", 15 * 1000);//15分钟（毫秒）
+        args.put("x-message-ttl", 15 * 1000 * 60);//15分钟（毫秒）
         args.put("x-dead-letter-exchange", ORDER_DEAD_EXCHANGE);//过期后发到哪个交换机
         args.put("x-dead-letter-routing-key", ORDER_DEAD_ROUTING_KEY);
         return new Queue(ORDER_DELAY_QUEUE, true, false, false, args);
@@ -90,11 +90,16 @@ public class RabbitMQConfig {
         return new DirectExchange(ORDER_RETRY_EXCHANGE);
     }
     /**
-     * 重试队列：只做“暂存”。真正的处理逻辑还是回到消费者
+     * 重试队列：只做5秒延迟暂存，过期后自动回到关单队列
+     * 死信配置让它自动转发回order.dead.exchange,无需消费者监听
      */
     @Bean
     public Queue orderRetryQueue() {
-        return new Queue(ORDER_RETRY_QUEUE, true);
+        Map<String, Object> args = new HashMap<>();
+        args.put("x-message-ttl", 5000);                 // 5 秒后过期
+        args.put("x-dead-letter-exchange", ORDER_DEAD_EXCHANGE);
+        args.put("x-dead-letter-routing-key", ORDER_DEAD_ROUTING_KEY);
+        return new Queue(ORDER_RETRY_QUEUE, true, false, false, args);
     }
 /**
  * 创建一个绑定，将重试队列与重试交换器关联起来，并指定路由键

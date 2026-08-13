@@ -42,6 +42,31 @@
         </set>
         where id = #{id}
     </update>
+    <update id="cancelByIdIfPendingPayment">
+        update orders
+        set status=6,
+            cancel_reason='订单超时，自动取消',
+            cancel_time=#{now}
+            where id=#{id} and status=1
+    </update>
+
+    <update id="cancelByIdIfStatus">
+        update orders
+        <set>
+            <if test="orders.cancelReason != null and orders.cancelReason != ''">
+                cancel_reason = #{orders.cancelReason},
+            </if>
+            <if test="orders.cancelTime != null">
+                cancel_time = #{orders.cancelTime},
+            </if>
+            <if test="orders.payStatus != null">
+                pay_status = #{orders.payStatus},
+            </if>
+            status = #{orders.status}
+        </set>
+        where id = #{id} and status = #{expectedStatus}
+    </update>
+
 
     <select id="pageQuery" resultType="Orders">
         select * from orders

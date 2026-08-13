@@ -13,6 +13,7 @@ import com.sky.exception.OrderBusinessException;
 import com.sky.mapper.*;
 import com.sky.result.PageResult;
 import com.sky.service.OrderService;
+import com.sky.service.StockService;
 import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -66,12 +68,12 @@ public class OrderServiceImpl implements OrderService {
      * 地址簿数据访问对象
      */
     private final AddressBookMapper addressBookMapper;
-
     private final WebSocketServer webSocketServer;
-
     private final StringRedisTemplate stringRedisTemplate;
-
     private final RabbitTemplate rabbitTemplate;
+    private final StockService stockService;
+    private static final String SUBMIT_TOKEN_KEY_PREFIX="order:submit:token:";
+
     /**
      * 店铺地址
      */
@@ -107,7 +109,7 @@ public class OrderServiceImpl implements OrderService {
         // 检查幂等令牌
         Long consumed=stringRedisTemplate.execute(
                 IDEMPOTENT_SCRIPT,
-                Collections.singletonList("order:submit:token:"+ordersSubmitDTO.getToken()),
+                Collections.singletonList(SUBMIT_TOKEN_KEY_PREFIX+ordersSubmitDTO.getToken()),
                 String.valueOf(BaseContext.getCurrentId()));
                 if(consumed==null|| consumed!=1L){
                     throw new OrderBusinessException("请勿重复提交订单");
@@ -132,55 +134,62 @@ public class OrderServiceImpl implements OrderService {
         if (shoppingCartList == null || shoppingCartList.isEmpty()) {
             throw new AddressBookBusinessException(MessageConstant.SHOPPING_CART_IS_NULL);
         }
+        //预扣库存：不足/未预热直接抛出异常，订单不会创建
+        stockService.deductStock(shoppingCartList);
 
         // 创建订单对象
-        Orders orders = new Orders();
-        BeanUtils.copyProperties(ordersSubmitDTO, orders);
-        orders.setOrderTime(LocalDateTime.now());
-        orders.setPayStatus(Orders.UN_PAID);
-        orders.setStatus(Orders.UN_PAID);
-        orders.setNumber(String.valueOf(System.currentTimeMillis()));
-        orders.setConsignee(addressBook.getConsignee());
-        orders.setUserId(userId);
+        try {
+            Orders orders = new Orders();
+            BeanUtils.copyProperties(ordersSubmitDTO, orders);
+            orders.setOrderTime(LocalDateTime.now());
+            orders.setPayStatus(Orders.UN_PAID);
+            orders.setStatus(Orders.UN_PAID);
+            orders.setNumber(String.valueOf(System.currentTimeMillis()));
+            orders.setConsignee(addressBook.getConsignee());
+            orders.setUserId(userId);
+            // 插入订单
+            orderMapper.insert(orders);
+            // 创建订单详情列表
+            List<OrderDetail> orderDetailList = new ArrayList<>();
+            for (ShoppingCart cart : shoppingCartList) {
+                OrderDetail orderDetail = new OrderDetail();
+                BeanUtils.copyProperties(cart, orderDetail);
+                orderDetail.setOrderId(orders.getId());
+                orderDetailList.add(orderDetail);
+            }
+            // 批量插入订单详情
+            orderDetailMapper.insertBatch(orderDetailList);
 
-        // 插入订单
-        orderMapper.insert(orders);
+            // 清空购物车
+            shoppingCartMapper.deleteByUserId(userId);
 
-        // 创建订单详情列表
-        List<OrderDetail> orderDetailList = new ArrayList<>();
-        for (ShoppingCart cart : shoppingCartList) {
-            OrderDetail orderDetail = new OrderDetail();
-            BeanUtils.copyProperties(cart, orderDetail);
-            orderDetail.setOrderId(orders.getId());
-            orderDetailList.add(orderDetail);
+            // 构建订单提交视图对象
+            try {
+            //发送延迟关单消息：15分钟后进入死信队列触发关单
+            CorrelationData cd =new CorrelationData(
+                    "order-close-" + orders.getId() + "-" + UUID.randomUUID());
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConfig.ORDER_EXCHANGE,
+                    RabbitMQConfig.ORDER_DELAY_ROUTING_KEY,
+                    orders.getId(),
+                    cd);
+                //return orderSubmitVO;
+            } catch (Exception e) {
+                log.error("延迟关单消息发送失败，等待定时任务兜底：orderId={}",orders.getId(),e);
+
+            }
+            return OrderSubmitVO.builder()
+                        .id(orders.getId())
+                        .orderTime(orders.getOrderTime())
+                        .orderNumber(orders.getNumber())
+                        .orderAmount(orders.getAmount())
+                        .build();
+        } catch (Exception e) {
+            //下单失败，事务回滚订单，redis库存手动回补
+            log.error("下单失败，回补库存",e);
+            stockService.releaseStockByCart(shoppingCartList);
+            throw e;
         }
-        // 批量插入订单详情
-        orderDetailMapper.insertBatch(orderDetailList);
-
-        // 清空购物车
-        shoppingCartMapper.deleteByUserId(userId);
-
-        // 构建订单提交视图对象
-        OrderSubmitVO orderSubmitVO = OrderSubmitVO.builder()
-                .id(orders.getId())
-                .orderTime(orders.getOrderTime())
-                .orderNumber(orders.getNumber())
-                .orderAmount(orders.getAmount())
-                .build();
-
-//        //发送延迟关单消息：订单进入15分钟延迟，超时未支付由死信消费者关单
-//        rabbitTemplate.convertAndSend(
-//                RabbitMQConfig.ORDER_EXCHANGE,
-//                RabbitMQConfig.ORDER_DELAY_ROUTING_KEY,
-//                orders.getId());
-        //发送延迟关单消息：CorrelationData用于发送确认，id带上orderId方便排查
-        CorrelationData cd =new CorrelationData("order-close-" + orders.getId() + "-" + UUID.randomUUID());
-        rabbitTemplate.convertAndSend(
-                RabbitMQConfig.ORDER_EXCHANGE,
-                RabbitMQConfig.ORDER_DELAY_ROUTING_KEY,
-                orders.getId(),
-                cd);
-        return orderSubmitVO;
     }
 
     /**
@@ -351,7 +360,15 @@ public class OrderServiceImpl implements OrderService {
         orders.setStatus(Orders.CANCELLED);
         orders.setCancelReason(ORDER_CANCEL_BY_USER);
         orders.setCancelTime(LocalDateTime.now());
-        orderMapper.update(orders);
+
+        // 条件更新：仅当还是原状态才取消（防用户取消与超时关单并发双回补）
+        int rows = orderMapper.cancelByIdIfStatus(
+                ordersDB.getId(), ordersDB.getStatus(), orders);
+        if (rows > 0) {
+            stockService.releaseStock(orderDetailMapper.getByOrderId(ordersDB.getId()));
+        } else {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
     }
 
 /**
@@ -539,6 +556,10 @@ public class OrderServiceImpl implements OrderService {
         orders.setCancelReason(ordersCancelDTO.getCancelReason());
         orders.setCancelTime(LocalDateTime.now());
         orderMapper.update(orders);
+
+        // 回补库存
+        List<OrderDetail> details = orderDetailMapper.getByOrderId(ordersDB.getId());
+        stockService.releaseStock(details);
     }
 
     /**
@@ -611,7 +632,7 @@ public class OrderServiceImpl implements OrderService {
         String token = UUID.randomUUID().toString().replace("-", "");
         Long userId = BaseContext.getCurrentId();
         stringRedisTemplate.opsForValue().set(
-                "order:submitToken:" + token,
+                SUBMIT_TOKEN_KEY_PREFIX+token,
                 String.valueOf(userId),
                 10, TimeUnit.MINUTES);
         return token;

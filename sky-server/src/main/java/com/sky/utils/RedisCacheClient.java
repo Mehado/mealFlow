@@ -51,7 +51,7 @@ public class RedisCacheClient {
      */
     public <T> T getJson(String key, TypeReference<T> type) {
         String json = stringRedisTemplate.opsForValue().get(key);
-        if (json == null || NULL_MARK.equals(json)) {
+        if (json == null || NULL_MARK.equals(json)||"null".equals(json)) {
             return null;
         }
         return JSON.parseObject(json, type);

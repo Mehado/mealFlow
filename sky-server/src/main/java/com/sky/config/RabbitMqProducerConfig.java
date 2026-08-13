@@ -23,10 +23,12 @@ public class RabbitMqProducerConfig {
         // ack=true：Broker 已接收；ack=false：发送失败（交换机不存在、写入失败等）
         template.setConfirmCallback((correlationData, ack, cause) -> {
             if (!ack) {
-                log.error("MQ 发送失败：correlationId={}, cause={}", correlationData.getId(), cause);
+                log.error("MQ 发送失败：correlationId={}, cause={}",
+                        correlationData == null ? "null":correlationData.getId(), cause);
                 // 生产环境在这里落库/告警；本项目关单有 OrderTask 定时兜底，记录日志即可
             } else {
-                log.debug("MQ 发送成功：correlationId={}", correlationData.getId());
+                log.debug("MQ 发送成功：correlationId={}",
+                        correlationData == null ? "null":correlationData.getId());
             }
         });
 

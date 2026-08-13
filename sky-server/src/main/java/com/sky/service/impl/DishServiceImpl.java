@@ -20,9 +20,6 @@ import com.sky.vo.DishVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -269,8 +266,8 @@ public class DishServiceImpl implements DishService {
             dishVOList.add(dishVO);
             }
         if(dishVOList.isEmpty()){
-            //空值缓存防止穿透
-            cacheClient.setJson(cacheKey,RedisCacheClient.NULL_MARK,60,0);
+            //空值缓存:缓存空数组+短TTL，防穿透且可命中
+            cacheClient.setJson(cacheKey,dishVOList,60,30);
         }else{
             //随机TTL防止雪崩
             cacheClient.setJson(cacheKey,dishVOList,300,60);

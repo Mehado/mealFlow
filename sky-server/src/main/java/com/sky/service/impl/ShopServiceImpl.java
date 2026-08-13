@@ -2,7 +2,6 @@ package com.sky.service.impl;
 
 import com.sky.service.ShopService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 

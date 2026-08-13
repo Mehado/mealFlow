@@ -3,16 +3,21 @@ package com.sky.mq;
 import com.rabbitmq.client.Channel;
 import com.sky.config.RabbitMQConfig;
 import com.sky.constant.MessageConstant;
+import com.sky.entity.OrderDetail;
 import com.sky.entity.Orders;
+import com.sky.mapper.OrderDetailMapper;
 import com.sky.mapper.OrderMapper;
+import com.sky.service.StockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageDeliveryMode;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 延迟关单消费者：监听关单队列 + 重试队列
@@ -25,8 +30,10 @@ public class OrderDeadLetterConsumer {
 
     private final OrderMapper orderMapper;
     private final RabbitTemplate rabbitTemplate;
+    private final OrderDetailMapper orderDetailMapper;
+    private final StockService stockService;
 
-    @RabbitListener(queues = {RabbitMQConfig.ORDER_DEAD_QUEUE, RabbitMQConfig.ORDER_RETRY_QUEUE})
+    @RabbitListener(queues = {RabbitMQConfig.ORDER_DEAD_QUEUE})
     public void handleTimeoutOrder(Long orderId, Channel channel, Message message) throws Exception {
         Object retryCountObj = message.getMessageProperties().getHeader("retryCount");
         int retryCount = retryCountObj instanceof Number ? ((Number) retryCountObj).intValue() : 0;
@@ -44,6 +51,7 @@ public class OrderDeadLetterConsumer {
                         msg -> {
                             msg.getMessageProperties().setHeader("retryCount", retryCount + 1);
                             msg.getMessageProperties().setExpiration("5000");
+                            msg.getMessageProperties().setDeliveryMode(MessageDeliveryMode.PERSISTENT);
                             return msg;
                         });
                 // 2. 当前这条消息确认掉，后续由重试队列负责
@@ -58,14 +66,11 @@ public class OrderDeadLetterConsumer {
 
     /** 关单逻辑抽出来，主队列和重试队列共用，保证只写一份 */
     private void cancelTimeoutOrder(Long orderId) {
-        Orders orderDB = orderMapper.getById(orderId);
-        // 幂等：只有还是"待付款"才关单；已支付/已取消则跳过
-        if (orderDB != null && Orders.PENDING_PAYMENT.equals(orderDB.getStatus())) {
-            orderDB.setStatus(Orders.CANCELLED);
-            orderDB.setCancelReason(MessageConstant.ORDER_TIMEOUT_CANCEL);
-            orderDB.setCancelTime(LocalDateTime.now());
-            orderMapper.update(orderDB);
-            log.info("MQ延迟关单成功：orderId={}", orderId);
+        int rows = orderMapper.cancelByIdIfPendingPayment(orderId,LocalDateTime.now());
+        if (rows>0) {
+            List<OrderDetail> details = orderDetailMapper.getByOrderId(orderId);
+            stockService.releaseStock(details);
+            log.info("MQ延迟关单成功并回补库存：orderId={}", orderId);
         } else {
             log.info("MQ延迟关单跳过：orderId={} 状态已变更", orderId);
         }
