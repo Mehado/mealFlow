@@ -16,9 +16,9 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Slf4j // Lombok注解，自动生成日志器变量，可通过log直接使用
 @EnableCaching // 启用Spring的缓存功能，允许使用@Cacheable等缓存注解
 @EnableScheduling//开启定时任务
-public class SkyApplication {
+public class MealflowApplication {
     public static void main(String[] args) {
-        SpringApplication.run(SkyApplication.class, args);
-        log.info("SkyApplication start success");
+        SpringApplication.run(MealflowApplication.class, args);
+        log.info("MealflowApplication start success");
     }
 }

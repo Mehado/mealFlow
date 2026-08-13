@@ -9,13 +9,13 @@
         <version>4.0.6</version>
     </parent>
     <groupId>com.sky</groupId>
-    <artifactId>sky-take-out</artifactId>
+    <artifactId>mealflow</artifactId>
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>sky-common</module>
-        <module>sky-pojo</module>
-        <module>sky-server</module>
+        <module>mealflow-common</module>
+        <module>mealflow-pojo</module>
+        <module>mealflow-server</module>
     </modules>
     <properties>
         <mybatis.spring>4.0.1</mybatis.spring>

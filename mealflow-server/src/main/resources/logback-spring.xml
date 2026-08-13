@@ -3,16 +3,17 @@
     <!-- 控制台输出：带上 traceId，一条请求的日志用同一个 id 串起来 -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId}] %-5level %logger{36} - %msg%n</pattern>
+            <!-- %highlight 按日志级别着色（ERROR 红/WARN 黄/INFO 绿），%cyan 给 logger 上青色，还原 Spring Boot 默认配色 -->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId}] %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>
             <charset>UTF-8</charset>
         </encoder>
     </appender>
 
     <!-- 文件输出：按天滚动，方便用 grep traceId 检索 -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/sky-take-out.log</file>
+        <file>logs/mealflow.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/sky-take-out.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>logs/mealflow.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
