@@ -37,6 +37,9 @@ public class DishDTO implements Serializable {
     @NotNull(message = "菜品状态不能为空")
     private Integer status;
 
+    //库存
+    private Integer stock;
+
     //口味
     private List<DishFlavor> flavors = new ArrayList<>();
 

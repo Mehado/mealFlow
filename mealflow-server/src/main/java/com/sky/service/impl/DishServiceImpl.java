@@ -15,6 +15,7 @@ import com.sky.mapper.DishMapper;
 import com.sky.mapper.SetmealDishMapper;
 import com.sky.result.PageResult;
 import com.sky.service.DishService;
+import com.sky.service.StockService;
 import com.sky.utils.RedisCacheClient;
 import com.sky.vo.DishVO;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,8 @@ public class DishServiceImpl implements DishService {
     private final RedisCacheClient cacheClient;
 
     private final SetmealDishMapper setmealDishMapper;
+
+    private final StockService stockService;
     /**
      * 新增菜品和对应的口味
      * @param dishDTO
@@ -65,6 +68,8 @@ public class DishServiceImpl implements DishService {
         }
         //cache-Aside:先写库，再删除缓存
         cacheClient.delete(dishCacheKey(dishDTO.getCategoryId()));
+        //新增菜品后同步库存到 Redis（未传时按数据库默认 100）
+        stockService.syncStock(dishId, dish.getStock() != null ? dish.getStock() : 100);
     }
 
 
@@ -149,6 +154,8 @@ public class DishServiceImpl implements DishService {
         BeanUtils.copyProperties(dishDTO,dish);
         //修改菜品表基本信息
         dishMapper.update(dish);
+        //库存变化同步到 Redis（更新后的 Dish 对象带 stock）
+        stockService.syncStock(dish.getId(), dish.getStock());
         //删除菜品口味表信息，为重新插入做准备
         dishFlavorMapper.deleteByDishId(dish.getId());
         //新增菜品口味表信息

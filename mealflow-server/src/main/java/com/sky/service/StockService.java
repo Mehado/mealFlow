@@ -21,5 +21,8 @@ public interface StockService {
 
     /** 启动时把 DB 库存预热到 Redis */
     void warmUpAll();
+
+    /** 管理端新增/修改菜品后同步 Redis 库存（避免与预热值不一致） */
+    void syncStock(Long dishId, Integer stock);
 }
 

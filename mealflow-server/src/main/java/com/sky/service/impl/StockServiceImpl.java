@@ -134,6 +134,20 @@ public class StockServiceImpl implements StockService {
         log.info("菜品库存预热完成，共 {} 个菜品", dishes.size());
     }
 
+    /**
+     * 管理端新增/修改菜品后同步 Redis 库存
+     * @param dishId 菜品ID
+     * @param stock 最新库存值
+     */
+    @Override
+    public void syncStock(Long dishId, Integer stock) {
+        if (dishId == null || stock == null) {
+            return;
+        }
+        stringRedisTemplate.opsForValue().set(stockKey(dishId), String.valueOf(stock));
+        log.info("同步菜品库存 Redis 缓存：dishId={}, stock={}", dishId, stock);
+    }
+
     /** 购物车 -> 菜品维度数量聚合（单品直接记，套餐拆解） */
     private Map<Long, Integer> collectDishQtyFromCart(List<ShoppingCart> items) {
         Map<Long, Integer> qty = new HashMap<>();
