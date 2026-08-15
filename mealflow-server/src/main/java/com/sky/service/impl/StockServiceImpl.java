@@ -33,29 +33,10 @@ public class StockServiceImpl implements StockService {
     private final StringRedisTemplate stringRedisTemplate; // Redis字符串操作模板
     private final DishMapper dishMapper; // 菜品数据访问层
     private final SetmealDishMapper setmealDishMapper; // 套餐菜品数据访问层
-
-    /** 预扣脚本：原子检查并扣减 */
-    private static final DefaultRedisScript<Long> DEDUCT_SCRIPT = new DefaultRedisScript<>(); // Redis预扣减脚本
-    static {
-        DEDUCT_SCRIPT.setResultType(Long.class); // 设置脚本返回类型为Long
-        DEDUCT_SCRIPT.setScriptText(
-                "local stock = tonumber(redis.call('get', KEYS[1]) or '-1') " + // 获取库存值，若不存在则为-1
-                        "if stock == -1 then return -2 end " + // 库存未预热返回-2
-                        "if stock < tonumber(ARGV[1]) then return -1 end " + // 库存不足返回-1
-                        "redis.call('decrby', KEYS[1], ARGV[1]) " + // 库存充足则扣减
-                        "return 1" // 成功返回1
-        );
-    }
-
-    /** 回补脚本：key 存在才加回，防止"扣了但还没预热"时把负库存写进去 */
-    private static final DefaultRedisScript<Long> RELEASE_SCRIPT = new DefaultRedisScript<>(); // Redis回补脚本
-    static {
-        RELEASE_SCRIPT.setResultType(Long.class); // 设置脚本返回类型为Long
-        RELEASE_SCRIPT.setScriptText(
-                "if redis.call('exists', KEYS[1]) == 1 then " + // 检查key是否存在
-                        "return redis.call('incrby', KEYS[1], ARGV[1]) else return -1 end" // 存在则增加库存，否则返回-1
-        );
-    }
+    /** 预扣脚本：由 RedisScriptConfig 从 .lua 文件加载为 Bean */
+    private final DefaultRedisScript<Long> deductStockScript;
+    /** 回补脚本：由 RedisScriptConfig 从 .lua 文件加载为 Bean */
+    private final DefaultRedisScript<Long> releaseStockScript;
 
     /**
      * 生成菜品库存的Redis键
@@ -70,14 +51,13 @@ public class StockServiceImpl implements StockService {
      * 从购物车列表中扣减库存
      * @param items 购物车项列表
      */
-    @Override
     public void deductStock(List<ShoppingCart> items) {
         // 先展开成"菜品 -> 数量"，聚合后统一扣，避免同一菜品多次扣减
         List<Map.Entry<Long, Integer>> entries = new ArrayList<>(collectDishQtyFromCart(items).entrySet());
         for (int i = 0; i < entries.size(); i++) {
             Map.Entry<Long, Integer> entry = entries.get(i);
             Long result = stringRedisTemplate.execute(
-                    DEDUCT_SCRIPT,
+                    deductStockScript,
                     Collections.singletonList(stockKey(entry.getKey())),
                     String.valueOf(entry.getValue()));
 
@@ -193,11 +173,11 @@ public class StockServiceImpl implements StockService {
     private void release(Long dishId, Integer number) {
     // 使用Redis脚本执行器执行释放库存的Lua脚本
     // 参数说明:
-    // 1. RELEASE_SCRIPT: 预定义的Lua脚本
+    // 1. releaseStockScript: 从 .lua 文件加载的脚本 Bean
     // 2. Collections.singletonList(stockKey(dishId)): Redis键列表，包含菜品库存键
     // 3. String.valueOf(number): 需要释放的库存数量，转换为字符串格式
         stringRedisTemplate.execute(
-                RELEASE_SCRIPT,
+                releaseStockScript,
                 Collections.singletonList(stockKey(dishId)),
                 String.valueOf(number));
     }

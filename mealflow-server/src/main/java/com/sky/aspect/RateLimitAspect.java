@@ -2,12 +2,12 @@ package com.sky.aspect;
 
 import com.sky.annotations.RateLimit;
 import com.sky.exception.RateLimitException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
@@ -22,22 +22,12 @@ import java.util.Collections;
 @Aspect
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class RateLimitAspect {
 
-    @Autowired
-    private StringRedisTemplate stringRedisTemplate;
-
-    // 固定窗口计数脚本：INCR + EXPIRE + 超限判断，Redis 原子执行
-    private static final DefaultRedisScript<Long> RATE_LIMIT_SCRIPT = new DefaultRedisScript<>();
-    static {
-        RATE_LIMIT_SCRIPT.setResultType(Long.class);
-        RATE_LIMIT_SCRIPT.setScriptText(
-                "local count = redis.call('incr', KEYS[1]) " +
-                        "if count == 1 then redis.call('expire', KEYS[1], tonumber(ARGV[2])) end " +
-                        "if count > tonumber(ARGV[1]) then return 0 end " +
-                        "return 1"
-        );
-    }
+    private final StringRedisTemplate stringRedisTemplate;
+    /** 限流脚本：由 RedisScriptConfig 从 .lua 文件加载为 Bean */
+    private final DefaultRedisScript<Long> rateLimitScript;
 
     @Pointcut("@annotation(rateLimit)")
     public void rateLimitPointcut(RateLimit rateLimit) {
@@ -56,7 +46,7 @@ public class RateLimitAspect {
 
         // 3. 执行 Lua 计数，返回 0 = 超限
         Long allow = stringRedisTemplate.execute(
-                RATE_LIMIT_SCRIPT,
+                rateLimitScript,
                 Collections.singletonList(key),
                 String.valueOf(rateLimit.limit()),
                 String.valueOf(rateLimit.window()));

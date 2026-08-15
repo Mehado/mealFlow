@@ -5,8 +5,9 @@ sky:
     port: 3306
     database: mealflow
     username: root
-    password: ENC(jwAZvWvXyCP5PZIZWsHM0zlJp3T/xP5qWlTkP2Ns+X/UrVefPa2R+VrWzrxWqLN1)
+    password: ENC(rYFJ/t8F/QQwCncg7IqzjdJigh2YI3bSG0Nn1Hmwuy0pCX3Si0mjyqkrqeT1PoPg)
   alioss:
+
     endpoint: oss-cn-beijing.aliyuncs.com
     access-key-id: ENC(mdid8CUy3FXzT1dV2H93h5avWMus/81CUJ1MxFDB7Q0AYbyltyRCjOG55WbTNmqErdtCWzfycMVRoVSZ1ycGbw==)
     access-key-secret: ENC(Ha4qa2yA8FxjDj9a2vK7Uzh8o0yH79x22WPHHMEIYngNRR2OThXStV9L/VyMQ44BjVsCfpSL6u984r1VuUwqdA==)

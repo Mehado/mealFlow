@@ -48,30 +48,17 @@ import static com.sky.entity.Orders.TO_BE_CONFIRMED;
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
-    /**
-     * 订单数据访问对象
-     */
     private final OrderMapper orderMapper;
-    /**
-     * 订单详情数据访问对象
-     */
     private final OrderDetailMapper orderDetailMapper;
-    /**
-     * 购物车数据访问对象
-     */
     private final ShoppingCartMapper shoppingCartMapper;
-    /**
-     * 用户数据访问对象
-     */
     private final UserMapper userMapper;
-    /**
-     * 地址簿数据访问对象
-     */
     private final AddressBookMapper addressBookMapper;
     private final WebSocketServer webSocketServer;
     private final StringRedisTemplate stringRedisTemplate;
     private final RabbitTemplate rabbitTemplate;
     private final StockService stockService;
+    /** 下单幂等令牌消费脚本：由 RedisScriptConfig 从 .lua 文件加载为 Bean */
+    private final DefaultRedisScript<Long> idempotentTokenScript;
     private static final String SUBMIT_TOKEN_KEY_PREFIX="order:submit:token:";
 
     /**
@@ -79,25 +66,12 @@ public class OrderServiceImpl implements OrderService {
      */
     @Value("${sky.shop.address}")
     private String shopAddress;
-
     /**
      * 百度地图API密钥
      */
     @Value("${sky.baidu.ak}")
     private String ak;
 
-
-    //幂等token消费脚本：token存在且属于当前用户才删除并返回1，否则返回0
-    private static final DefaultRedisScript<Long> IDEMPOTENT_SCRIPT = new DefaultRedisScript<>();
-
-    static {
-        IDEMPOTENT_SCRIPT.setResultType(Long.class);
-        IDEMPOTENT_SCRIPT.setScriptText(
-                "if redis.call('get', KEYS[1]) == ARGV[1] then " +
-                        "return redis.call('del', KEYS[1]) " +
-                        "else return 0 end"
-        );
-    }
 
     /**
      * 提交订单
@@ -108,7 +82,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderSubmitVO submitOrder(OrdersSubmitDTO ordersSubmitDTO) {
         // 检查幂等令牌
         Long consumed=stringRedisTemplate.execute(
-                IDEMPOTENT_SCRIPT,
+                idempotentTokenScript,
                 Collections.singletonList(SUBMIT_TOKEN_KEY_PREFIX+ordersSubmitDTO.getToken()),
                 String.valueOf(BaseContext.getCurrentId()));
                 if(consumed==null|| consumed!=1L){

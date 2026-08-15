@@ -30,6 +30,8 @@ public class RedisCacheClient {
     private static final String LOCK_PREFIX = "cache:lock:";
 
     private final StringRedisTemplate stringRedisTemplate;
+    /** 释放锁脚本：由 RedisScriptConfig 从 .lua 文件加载为 Bean */
+    private final DefaultRedisScript<Long> unlockScript;
 
     /**
      * 写 JSON 缓存，随机 TTL 防雪崩
@@ -75,11 +77,7 @@ public class RedisCacheClient {
     /** 释放互斥锁：Lua 比较 value，只释放自己持有的锁，防止误删别人的锁 */
     public void unlock(String key) {
         String lockKey = LOCK_PREFIX + key;
-        DefaultRedisScript<Long> script = new DefaultRedisScript<>(
-                "if redis.call('get', KEYS[1]) == ARGV[1] then " +
-                        "return redis.call('del', KEYS[1]) else return 0 end",
-                Long.class);
-        stringRedisTemplate.execute(script, Collections.singletonList(lockKey),
+        stringRedisTemplate.execute(unlockScript, Collections.singletonList(lockKey),
                 Thread.currentThread().getName());
     }
 }
