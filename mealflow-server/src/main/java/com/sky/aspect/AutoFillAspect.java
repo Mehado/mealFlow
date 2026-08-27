@@ -28,7 +28,6 @@ public class AutoFillAspect {
     @Pointcut("execution(* com.sky.mapper..*(..)) && @annotation(com.sky.annotations.AutoFill)") // 定义切入点表达式
     public void autoFillPointCut(){ // 切入点方法，方法名为autoFillPointCut
     }
-/*******************    💫 Codegeex Suggestion    *******************/
 /**
  * 在执行@Before注解标记的方法前执行，用于自动填充公共字段
  * @param joinPoint 连接点，可以获取方法执行时的相关信息

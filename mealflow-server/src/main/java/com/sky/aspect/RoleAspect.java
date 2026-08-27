@@ -13,6 +13,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 
+/**
+ * 角色权限切面类
+ * 使用 AOP 实现基于注解的角色权限控制
+ */
 @Aspect
 @Component
 @Slf4j

@@ -82,7 +82,6 @@ public class StockServiceImpl implements StockService {
      * 从订单明细中回补库存
      * @param items 订单明细列表
      */
-    @Override
     public void releaseStock(List<OrderDetail> items) {
         for (Map.Entry<Long, Integer> e : collectDishQtyFromDetail(items).entrySet()) {
             release(e.getKey(), e.getValue());
@@ -93,7 +92,6 @@ public class StockServiceImpl implements StockService {
      * 从购物车中回补库存
      * @param items 购物车项列表
      */
-    @Override
     public void releaseStockByCart(List<ShoppingCart> items) {
         for (Map.Entry<Long, Integer> e : collectDishQtyFromCart(items).entrySet()) {
             release(e.getKey(), e.getValue());
@@ -103,7 +101,6 @@ public class StockServiceImpl implements StockService {
     /**
      * 预热所有菜品库存到Redis
      */
-    @Override
     public void warmUpAll() {
         List<Dish> dishes = dishMapper.list(new Dish());
         for (Dish dish : dishes) {
@@ -119,7 +116,6 @@ public class StockServiceImpl implements StockService {
      * @param dishId 菜品ID
      * @param stock 最新库存值
      */
-    @Override
     public void syncStock(Long dishId, Integer stock) {
         if (dishId == null || stock == null) {
             return;

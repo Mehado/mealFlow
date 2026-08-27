@@ -40,7 +40,7 @@ public class NoRepeatSubmitAspect {
  * @return 目标方法的执行结果
  * @throws Throwable 可能抛出的异常
  */
-    @Around("noRepeatPointcut(noRepeatSubmit)")
+    @Around("noRepeatPointcut(noRepeatSubmit)")  // 定义环绕通知，指定切点表达式和参数
     public Object around(ProceedingJoinPoint joinPoint,NoRepeatSubmit noRepeatSubmit) throws Throwable {
         //1.拼key：用户+方法+参数hash
         Long userId= BaseContext.getCurrentId();

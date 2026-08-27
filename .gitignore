@@ -2,8 +2,6 @@
 .idea
 *.iml
 *.class
-*Test.java
-**/test/
 logs/
 **/logs/
 docs/project-interview-guide.md

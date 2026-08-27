@@ -33,15 +33,28 @@ public class OrderDeadLetterConsumer {
     private final OrderDetailMapper orderDetailMapper;
     private final StockService stockService;
 
-    @RabbitListener(queues = {RabbitMQConfig.ORDER_DEAD_QUEUE})
+/**
+ * 处理延迟关单的监听方法
+ * 通过RabbitMQ监听死信队列，处理超时的订单
+ * @param orderId 订单ID
+ * @param channel RabbitMQ通道
+ * @param message 消息对象
+ * @throws Exception 可能抛出的异常
+ */
+    @RabbitListener(queues = {RabbitMQConfig.ORDER_DEAD_QUEUE}) // 监听死信队列
     public void handleTimeoutOrder(Long orderId, Channel channel, Message message) throws Exception {
+    // 从消息头中获取重试次数，如果没有则默认为0
         Object retryCountObj = message.getMessageProperties().getHeader("retryCount");
         int retryCount = retryCountObj instanceof Number ? ((Number) retryCountObj).intValue() : 0;
         try {
+        // 尝试取消超时订单
             cancelTimeoutOrder(orderId);
+        // 确认消息处理成功
             channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
         } catch (Exception e) {
+        // 记录错误日志，包含订单ID和当前重试次数
             log.error("延迟关单处理失败：orderId={}, retryCount={}", orderId, retryCount, e);
+        // 如果重试次数未达到最大值
             if (retryCount < RabbitMQConfig.MAX_RETRY) {
                 // 1. 发到重试队列：5 秒后重试，次数 +1
                 rabbitTemplate.convertAndSend(

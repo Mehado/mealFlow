@@ -260,6 +260,7 @@ public class DishServiceImpl implements DishService {
     private String dishCacheKey(Long categoryId){
         return "dish:category:" + categoryId;
     }
+
     /**回源DB 并填回缓存：空值缓存防止穿透，随机TTL防止雪崩*/
     private List<DishVO> queryAndCache(Long categoryId,String cacheKey) {
         Dish dish=Dish.builder().categoryId(categoryId).status(StatusConstant.ENABLE).build();
