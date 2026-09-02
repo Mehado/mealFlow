@@ -9,8 +9,8 @@ sky:
   alioss:
 
     endpoint: oss-cn-beijing.aliyuncs.com
-    access-key-id: ENC(mdid8CUy3FXzT1dV2H93h5avWMus/81CUJ1MxFDB7Q0AYbyltyRCjOG55WbTNmqErdtCWzfycMVRoVSZ1ycGbw==)
-    access-key-secret: ENC(Ha4qa2yA8FxjDj9a2vK7Uzh8o0yH79x22WPHHMEIYngNRR2OThXStV9L/VyMQ44BjVsCfpSL6u984r1VuUwqdA==)
+    access-key-id: ENC(MnO6Dhmaki/8eTROZu7S/BJuwLJaJHr8QDiJcea0Cz/EIT4l0JHM3oVhheb8DMRC41BJmjKgNxkFrMZyin1BUQ==)
+    access-key-secret: ENC(Q7w/3ilRO4F/Q4Phqrf2+5MyRXygehUvA+I/LMKrwyr40oqdgoyw+wU9N66hkYTsc4UadIgASlJVMh2LXXsQtg==)
     bucket-name: mehado-java
   redis:
       host: localhost
