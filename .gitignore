@@ -4,8 +4,8 @@
 *.class
 logs/
 **/logs/
-docs/project-interview-guide.md
 *.classpath
 *.factorypath
 *.project
 **/.settings/
+.claude
