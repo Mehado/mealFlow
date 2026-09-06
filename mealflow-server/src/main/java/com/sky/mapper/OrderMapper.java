@@ -24,6 +24,11 @@ public interface OrderMapper {
     void insert(Orders orders);
 
     /**
+     * 按用户+幂等令牌统计订单数（数据库防重兜底）
+     */
+    int countByUserAndToken(@Param("userId") Long userId,@Param ("token") String token);
+
+    /**
      * 根据订单号查询订单
      * @param orderNumber
      */

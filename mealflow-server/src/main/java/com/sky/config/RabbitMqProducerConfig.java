@@ -18,6 +18,7 @@ public class RabbitMqProducerConfig {
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
+        //开启强制路由
         template.setMandatory(true);
 
         // ack=true：Broker 已接收；ack=false：发送失败（交换机不存在、写入失败等）

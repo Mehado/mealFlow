@@ -31,11 +31,11 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.dao.DuplicateKeyException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
 import static com.sky.constant.MessageConstant.ORDER_CANCEL_BY_USER;
 import static com.sky.constant.MessageConstant.OUT_OF_DELIVERY_RANGE;
 import static com.sky.entity.Orders.TO_BE_CONFIRMED;
@@ -108,6 +108,12 @@ public class OrderServiceImpl implements OrderService {
         if (shoppingCartList == null || shoppingCartList.isEmpty()) {
             throw new AddressBookBusinessException(MessageConstant.SHOPPING_CART_IS_NULL);
         }
+        //数据库层幂等兜底：Redis 可能宕机/清空/数据回退导致穿透，
+        //判重以订单表唯一索引为准，先查一次挡掉绝大多数重复
+        int dupCount =orderMapper.countByUserAndToken(userId,ordersSubmitDTO.getToken());
+        if(dupCount>0){
+            throw new OrderBusinessException(("订单已经提交，请勿重复下单"));
+        }
         //预扣库存：不足/未预热直接抛出异常，订单不会创建
         stockService.deductStock(shoppingCartList);
 
@@ -115,10 +121,13 @@ public class OrderServiceImpl implements OrderService {
         try {
             Orders orders = new Orders();
             BeanUtils.copyProperties(ordersSubmitDTO, orders);
+
             orders.setOrderTime(LocalDateTime.now());
             orders.setPayStatus(Orders.UN_PAID);
-            orders.setStatus(Orders.UN_PAID);
+            orders.setStatus(Orders.PENDING_PAYMENT);
+
             orders.setNumber(String.valueOf(System.currentTimeMillis()));
+            orders.setSubmitToken(ordersSubmitDTO.getToken());
             orders.setConsignee(addressBook.getConsignee());
             orders.setUserId(userId);
             // 插入订单
@@ -158,6 +167,11 @@ public class OrderServiceImpl implements OrderService {
                         .orderNumber(orders.getNumber())
                         .orderAmount(orders.getAmount())
                         .build();
+        } catch (DuplicateKeyException e){
+            //数据库唯一索引拦截：同（user_id,submit_token)订单已存在（并发窗口穿透到这里）
+            log.warn("数据库唯一索引拦截重复下单，userId={},token={}",userId,ordersSubmitDTO.getToken());
+            stockService.releaseStockByCart(shoppingCartList);
+            throw new OrderBusinessException("订单已经提交，请勿重复下单");
         } catch (Exception e) {
             //下单失败，事务回滚订单，redis库存手动回补
             log.error("下单失败，回补库存",e);
