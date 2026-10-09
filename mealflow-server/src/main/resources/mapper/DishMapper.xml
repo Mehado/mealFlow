@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//Mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="com.sky.mapper.DishMapper">
+<mapper namespace="com.mealflow.mapper.DishMapper">
 
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
@@ -32,7 +32,7 @@
             #{id}
         </foreach>
     </delete>
-    <select id="pageQuery" resultType="com.sky.vo.DishVO">
+    <select id="pageQuery" resultType="com.mealflow.vo.DishVO">
         select d.id, d.name, d.category_id categoryId, d.price, d.image, d.description, d.status, d.stock, d.create_time createTime, d.update_time updateTime, d.create_user createUser, d.update_user updateUser,
                c.name categoryName from dish d left join category c on d.category_id = c.id
         <where>
@@ -47,7 +47,7 @@
                 </if>
         </where> order by d.create_time desc
     </select>
-    <select id="list" resultType="com.sky.entity.Dish">
+    <select id="list" resultType="com.mealflow.entity.Dish">
         select * from dish
         <where>
                 <if test="name != null and name != ''">

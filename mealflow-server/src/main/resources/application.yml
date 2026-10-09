@@ -49,14 +49,14 @@ spring:
 
 mybatis:
   mapper-locations: classpath:mapper/*.xml
-  type-aliases-package: com.sky.entity
+  type-aliases-package: com.mealflow.entity
   configuration:
     map-underscore-to-camel-case: true
 
 logging:
   level:
     com:
-      sky:
+      mealflow:
         mapper: debug
         service: info
         controller: info
@@ -64,7 +64,7 @@ logging:
 springdoc:
   api-docs:
     path: /v3/api-docs
-  packages-to-scan: com.sky.controller
+  packages-to-scan: com.mealflow.controller
   default-produces-media-type: application/json
 
 knife4j:

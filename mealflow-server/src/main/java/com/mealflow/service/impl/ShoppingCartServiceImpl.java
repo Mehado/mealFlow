@@ -1,0 +1,115 @@
+package com.mealflow.service.impl;
+
+import com.mealflow.context.BaseContext;
+import com.mealflow.dto.ShoppingCartDTO;
+import com.mealflow.entity.Dish;
+import com.mealflow.entity.Setmeal;
+import com.mealflow.entity.ShoppingCart;
+import com.mealflow.mapper.DishMapper;
+import com.mealflow.mapper.SetmealMapper;
+import com.mealflow.mapper.ShoppingCartMapper;
+import com.mealflow.service.ShoppingCartService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+
+@Service
+@Slf4j
+@RequiredArgsConstructor
+public class ShoppingCartServiceImpl implements ShoppingCartService {
+    private final ShoppingCartMapper shoppingCartMapper;
+    private final DishMapper dishMapper;
+    private final SetmealMapper setmealMapper;
+/**
+ * 添加购物车的方法
+ * @param shoppingCartDTO 购物车数据传输对象，包含商品信息、数量等信息
+ */
+    public void addShoppingCart(ShoppingCartDTO shoppingCartDTO) {
+        //判断加入购物车商品是否存在
+        ShoppingCart shoppingCart = new ShoppingCart();
+        BeanUtils.copyProperties(shoppingCartDTO,shoppingCart);
+        Long userId = BaseContext.getCurrentId();
+        shoppingCart.setUserId(userId);
+
+        List<ShoppingCart> list = shoppingCartMapper.list(shoppingCart);
+
+        //判断是否是第一次添加该商品，如果是，则直接添加，如果不是，则更新数量
+        if(list != null && !list.isEmpty()){
+            ShoppingCart cart = list.get(0);
+            cart.setNumber(cart.getNumber() + 1);
+            shoppingCartMapper.updateNumberById(cart);
+        }else{
+            //不存在数据需要插入
+            Long dishId = shoppingCartDTO.getDishId();
+            if(dishId!=null){
+                Dish dish = dishMapper.getById(dishId);
+                shoppingCart.setName(dish.getName());
+                shoppingCart.setImage(dish.getImage());
+                shoppingCart.setAmount(dish.getPrice());
+
+            }else{
+                Long setmealId = shoppingCartDTO.getSetmealId();
+
+                Setmeal setmeal = setmealMapper.getById(setmealId);
+                shoppingCart.setName(setmeal.getName());
+                shoppingCart.setImage(setmeal.getImage());
+                shoppingCart.setAmount(setmeal.getPrice());
+            }
+            shoppingCart.setNumber(1);
+            shoppingCart.setCreateTime(LocalDateTime.now());
+            shoppingCartMapper.insert(shoppingCart);
+        }
+    }
+
+    /**
+     * 展示购物车列表
+     * @return
+     */
+    public List<ShoppingCart> showShoppingCart() {
+        //获取当前用户id
+        Long userId = BaseContext.getCurrentId();
+        //根据用户id查询购物车列表
+        ShoppingCart shoppingCart=ShoppingCart.builder()
+                .userId(userId)
+                .build();
+        List<ShoppingCart> list = shoppingCartMapper.list(shoppingCart);
+        return list;
+    }
+
+    /**
+     * 清空购物车
+     * @return
+     */
+    public void cleanShoppingCart() {
+        Long userId = BaseContext.getCurrentId();
+        shoppingCartMapper.deleteByUserId(userId);
+    }
+
+    /**
+     * 删除购物车中一个商品
+     * @param shoppingCartDTO
+     * @return
+     */
+    public void subShoppingCart(ShoppingCartDTO shoppingCartDTO) {
+        ShoppingCart shoppingCart = new ShoppingCart();
+        BeanUtils.copyProperties(shoppingCartDTO, shoppingCart);
+        //设置查询条件，查询当前登录用户购物车信息
+        shoppingCart.setUserId(BaseContext.getCurrentId());
+        List<ShoppingCart> list = shoppingCartMapper.list(shoppingCart);
+        if (list != null && !list.isEmpty()) {
+            ShoppingCart cart = list.get(0);
+            // 如果当前商品数量 > 1，减1；否则直接删除
+            if (cart.getNumber() > 1) {
+                cart.setNumber(cart.getNumber() - 1);
+                shoppingCartMapper.updateNumberById(cart);
+            } else {
+                shoppingCartMapper.deleteById(cart.getId());
+            }
+        }
+    }
+}

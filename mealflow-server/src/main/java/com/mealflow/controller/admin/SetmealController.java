@@ -1,0 +1,110 @@
+package com.mealflow.controller.admin;
+
+import com.mealflow.annotations.RequireRole;
+import com.mealflow.constant.RoleConstant;
+import com.mealflow.dto.SetmealDTO;
+import com.mealflow.dto.SetmealPageQueryDTO;
+import com.mealflow.result.PageResult;
+import com.mealflow.result.Result;
+import com.mealflow.service.SetmealService;
+import com.mealflow.vo.SetmealVO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+/**
+ * 套餐管理
+ */
+@RestController
+@RequestMapping("/admin/setmeal")
+@Tag(name = "套餐管理")
+@Slf4j
+@RequiredArgsConstructor
+public class SetmealController {
+
+    private final SetmealService setmealService;
+
+    /**
+     * 新增套餐
+     * @param setmealDTO 套餐信息
+     * @return
+     */
+    @RequireRole
+    @PostMapping
+    @Operation(summary = "新增套餐")
+    public Result save(@Valid @RequestBody SetmealDTO setmealDTO){
+        log.info("新增套餐:{}",setmealDTO);
+        setmealService.saveWithDish(setmealDTO);
+        return Result.success();
+    }
+    /**
+     * 分页查询
+     * @param setmealPageQueryDTO
+     * @return
+     */
+    @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER,RoleConstant.CHEF})
+    @GetMapping("/page")
+    @Operation(summary = "分页查询")
+    public Result<PageResult> page(@Valid SetmealPageQueryDTO setmealPageQueryDTO){
+        PageResult pageResult= setmealService.pageQuery(setmealPageQueryDTO);
+        return Result.success(pageResult);
+    }
+    /**
+     * 根据id批量删除套餐   
+     * @param ids
+     * @return
+     */
+    @RequireRole
+    @DeleteMapping
+    @Operation(summary = "根据id批量删除套餐")
+    public Result delete(@RequestParam List<Long> ids){
+        log.info("根据id批量删除套餐:{}",ids);
+        setmealService.deleteBatch(ids);
+        return Result.success();
+    }
+
+    /**
+     * 根据id查询套餐，用于修改页面的回显数据
+     * @param id
+     * @return
+     */
+    @RequireRole({RoleConstant.OWNER,RoleConstant.CASHIER,RoleConstant.CHEF})
+    @GetMapping("/{id}")
+    @Operation(summary = "根据id查询套餐")
+    public Result<SetmealVO> getById(@PathVariable Long id){
+        SetmealVO setmealVO=setmealService.getByIdWithDish(id);
+        return Result.success(setmealVO);
+    }
+    /**
+     * 修改套餐
+     * @param setmealDTO
+     * @return
+     */
+    @RequireRole
+    @PutMapping
+    @Operation(summary = "修改套餐")
+    public Result update(@Valid @RequestBody SetmealDTO setmealDTO) {
+        log.info("修改套餐:{}", setmealDTO);
+        setmealService.update(setmealDTO);
+        return Result.success();
+    }
+    /**
+     * 套餐起售停售
+     * @param status
+     * @param id
+     * @return
+     */
+    @RequireRole
+    @PostMapping("/status/{status}")
+    @Operation(summary = "套餐起售停售")
+    public Result startOrStop(@PathVariable Integer status,Long id){
+        log.info("套餐起售停售:status={},id={}",status,id);
+        setmealService.startOrStop(status,id);
+        return Result.success();
+    }
+}
